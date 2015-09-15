@@ -3,12 +3,12 @@ package service
 import (
 	"fmt"
 
-	"github.com/kihamo/shadow/service/slack"
+	slacks "github.com/kihamo/shadow-slack/service"
 	sl "github.com/nlopes/slack"
 )
 
 type AwsCommand struct {
-	slack.AbstractSlackCommand
+	slacks.AbstractSlackCommand
 }
 
 func (c *AwsCommand) GetName() string {
