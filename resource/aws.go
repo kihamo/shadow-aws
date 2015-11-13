@@ -6,6 +6,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/kihamo/shadow"
 	"github.com/kihamo/shadow/resource"
@@ -98,7 +99,7 @@ func (r *Aws) Run() error {
 
 func (r *Aws) GetSNS() *sns.SNS {
 	if _, ok := r.services["sns"]; !ok {
-		r.services["sns"] = sns.New(r.awsConfig)
+		r.services["sns"] = sns.New(session.New(r.awsConfig))
 	}
 
 	return r.services["sns"].(*sns.SNS)

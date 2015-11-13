@@ -36,7 +36,7 @@
                     {{ range $i, $application := .Applications }}
                     <tr>
                         <td>{{ add $i 1 }}</td>
-                        <td>{{ $application.PlatformApplicationARN }}</td>
+                        <td>{{ $application.PlatformApplicationArn }}</td>
                     </tr>
                     {{ end }}
                     </tbody>
@@ -55,7 +55,7 @@
                     {{ range $i, $topic := .Topics }}
                     <tr>
                         <td>{{ add $i 1 }}</td>
-                        <td>{{ $topic.TopicARN }}</td>
+                        <td>{{ $topic.TopicArn }}</td>
                     </tr>
                     {{ end }}
                     </tbody>
@@ -75,7 +75,7 @@
                     {{ range $i, $subscription := .Subscriptions }}
                     <tr>
                         <td>{{ add $i 1 }}</td>
-                        <td>{{ $subscription.SubscriptionARN }}</td>
+                        <td>{{ $subscription.SubscriptionArn }}</td>
                         <td>{{ $subscription.Endpoint }}</td>
                     </tr>
                     {{ end }}
