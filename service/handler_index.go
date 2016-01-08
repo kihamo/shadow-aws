@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/kihamo/shadow/service/frontend"
 )
 
@@ -18,4 +19,5 @@ func (h *IndexHandler) Handle() {
 	h.View.Context["Applications"] = service.applications
 	h.View.Context["Subscriptions"] = service.subscriptions
 	h.View.Context["Topics"] = service.topics
+	h.View.Context["SDKVersion"] = aws.SDKVersion
 }
