@@ -149,7 +149,7 @@ func (s *AwsService) GetSubscriptions() []*sns.Subscription {
 	return s.subscriptions
 }
 
-func (s *AwsService) GetTopics() []*sns.Subscription {
+func (s *AwsService) GetTopics() []*sns.Topic {
 	s.mutex.RLock()
 	defer s.mutex.Unlock()
 
