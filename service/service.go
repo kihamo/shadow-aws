@@ -134,3 +134,24 @@ func (s *AwsService) getStatsJob(args ...interface{}) (int64, time.Duration) {
 
 	return -1, time.Hour
 }
+
+func (s *AwsService) GetApplications() []*sns.PlatformApplication {
+	s.mutex.RLock()
+	defer s.mutex.Unlock()
+
+	return s.applications
+}
+
+func (s *AwsService) GetSubscriptions() []*sns.Subscription {
+	s.mutex.RLock()
+	defer s.mutex.Unlock()
+
+	return s.subscriptions
+}
+
+func (s *AwsService) GetTopics() []*sns.Subscription {
+	s.mutex.RLock()
+	defer s.mutex.Unlock()
+
+	return s.topics
+}
