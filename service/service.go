@@ -58,7 +58,7 @@ func (s *AwsService) Run() error {
 	return nil
 }
 
-func (s *AwsService) getStatsJob(args ...interface{}) (int64, time.Duration) {
+func (s *AwsService) getStatsJob(attempts int64, args ...interface{}) (int64, time.Duration) {
 	var stop bool
 
 	// applications
