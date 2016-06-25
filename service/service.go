@@ -50,15 +50,15 @@ func (s *AwsService) Init(a *shadow.Application) error {
 }
 
 func (s *AwsService) Run() error {
-	if s.application.HasResource("tasks") {
-		tasks, _ := s.application.GetResource("tasks")
-		tasks.(*r.Dispatcher).AddNamedTask("aws.updater", s.getStatsJob)
+	if s.application.HasResource("workers") {
+		workers, _ := s.application.GetResource("workers")
+		workers.(*r.Workers).GetDispatcher().AddNamedTaskByFunc("aws.updater", s.getStatsJob)
 	}
 
 	return nil
 }
 
-func (s *AwsService) getStatsJob(attempts int64, args ...interface{}) (int64, time.Duration) {
+func (s *AwsService) getStatsJob(attempts int64, _ chan bool, args ...interface{}) (int64, time.Duration) {
 	var stop bool
 
 	// applications
