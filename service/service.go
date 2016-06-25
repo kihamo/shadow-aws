@@ -52,7 +52,7 @@ func (s *AwsService) Init(a *shadow.Application) error {
 func (s *AwsService) Run() error {
 	if s.application.HasResource("workers") {
 		workers, _ := s.application.GetResource("workers")
-		workers.(*r.Workers).GetDispatcher().AddNamedTaskByFunc("aws.updater", s.getStatsJob)
+		workers.(*r.Workers).AddNamedTaskByFunc("aws.updater", s.getStatsJob)
 	}
 
 	return nil
