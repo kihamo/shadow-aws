@@ -58,7 +58,7 @@ func (s *AwsService) Run() error {
 	return nil
 }
 
-func (s *AwsService) getStatsJob(attempts int64, _ chan bool, args ...interface{}) (int64, time.Duration, error) {
+func (s *AwsService) getStatsJob(attempts int64, _ chan bool, args ...interface{}) (int64, time.Duration, interface{}, error) {
 	var stop bool
 
 	// applications
@@ -75,7 +75,7 @@ func (s *AwsService) getStatsJob(attempts int64, _ chan bool, args ...interface{
 				stop = true
 			}
 		} else {
-			return -1, time.Minute * 10, err
+			return -1, time.Minute * 10, nil, err
 		}
 	}
 
@@ -94,7 +94,7 @@ func (s *AwsService) getStatsJob(attempts int64, _ chan bool, args ...interface{
 				stop = true
 			}
 		} else {
-			return -1, time.Minute * 10, err
+			return -1, time.Minute * 10, nil, err
 		}
 	}
 
@@ -113,7 +113,7 @@ func (s *AwsService) getStatsJob(attempts int64, _ chan bool, args ...interface{
 				stop = true
 			}
 		} else {
-			return -1, time.Minute * 10, err
+			return -1, time.Minute * 10, nil, err
 		}
 	}
 
@@ -123,7 +123,7 @@ func (s *AwsService) getStatsJob(attempts int64, _ chan bool, args ...interface{
 	s.topics = topics
 	s.mutex.Unlock()
 
-	return -1, time.Hour, nil
+	return -1, time.Hour, nil, nil
 }
 
 func (s *AwsService) GetApplications() []*sns.PlatformApplication {
