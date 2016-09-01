@@ -14,6 +14,7 @@ import (
 
 type AwsSnsApplication struct {
 	Arn                       string
+	EndpointsCount            int64
 	CertificateExpirationDate *time.Time
 }
 
@@ -58,90 +59,89 @@ func (s *AwsService) Init(a *shadow.Application) error {
 func (s *AwsService) Run() error {
 	if s.application.HasResource("workers") {
 		workers, _ := s.application.GetResource("workers")
-		workers.(*r.Workers).AddNamedTaskByFunc("aws.updater", s.getStatsJob)
+		workers.(*r.Workers).AddNamedTaskByFunc("aws.updater.applications", s.getApplicationsJob)
+		workers.(*r.Workers).AddNamedTaskByFunc("aws.updater.subscriptions", s.getSubscriptionsJob)
+		workers.(*r.Workers).AddNamedTaskByFunc("aws.updater.topics", s.getTopicsJob)
 	}
 
 	return nil
 }
 
-func (s *AwsService) getStatsJob(attempts int64, _ chan bool, args ...interface{}) (int64, time.Duration, interface{}, error) {
-	var stop bool
-
-	// applications
+func (s *AwsService) getApplicationsJob(attempts int64, _ chan bool, args ...interface{}) (int64, time.Duration, interface{}, error) {
 	applications := []AwsSnsApplication{}
-	paramsApplications := &sns.ListPlatformApplicationsInput{}
-	for !stop {
-		responseApps, err := s.SNS.ListPlatformApplications(paramsApplications)
-		if err == nil {
-			for _, a := range responseApps.PlatformApplications {
-				snsApplication := AwsSnsApplication{
-					Arn: aws.StringValue(a.PlatformApplicationArn),
+	params := &sns.ListPlatformApplicationsInput{}
+
+	err := s.SNS.ListPlatformApplicationsPages(params, func(p *sns.ListPlatformApplicationsOutput, lastPage bool) bool {
+		for _, a := range p.PlatformApplications {
+			application := AwsSnsApplication{
+				Arn:            aws.StringValue(a.PlatformApplicationArn),
+				EndpointsCount: -1,
+			}
+
+			if dateRaw, ok := a.Attributes["AppleCertificateExpirationDate"]; ok {
+				if dateValue, err := time.Parse(time.RFC3339, aws.StringValue(dateRaw)); err == nil {
+					application.CertificateExpirationDate = &dateValue
 				}
-
-				if dateRaw, ok := a.Attributes["AppleCertificateExpirationDate"]; ok {
-					if dateValue, err := time.Parse(time.RFC3339, aws.StringValue(dateRaw)); err == nil {
-						snsApplication.CertificateExpirationDate = &dateValue
-					}
-				}
-
-				applications = append(applications, snsApplication)
 			}
 
-			if responseApps.NextToken != nil {
-				paramsApplications.NextToken = responseApps.NextToken
-			} else {
-				stop = true
-			}
-		} else {
-			return -1, time.Minute * 10, nil, err
+			applications = append(applications, application)
 		}
-	}
 
-	// subscriptions
-	stop = false
-	subscriptions := []*sns.Subscription{}
-	paramsSubscriptions := &sns.ListSubscriptionsInput{}
-	for !stop {
-		responseSubscriptions, err := s.SNS.ListSubscriptions(paramsSubscriptions)
-		if err == nil {
-			subscriptions = append(subscriptions, responseSubscriptions.Subscriptions...)
+		return !lastPage
+	})
 
-			if responseSubscriptions.NextToken != nil {
-				paramsSubscriptions.NextToken = responseSubscriptions.NextToken
-			} else {
-				stop = true
-			}
-		} else {
-			return -1, time.Minute * 10, nil, err
+	s.mutex.Lock()
+	s.applications = applications
+	s.mutex.Unlock()
+
+	for i, application := range applications {
+		params := &sns.ListEndpointsByPlatformApplicationInput{
+			PlatformApplicationArn: aws.String(application.Arn),
 		}
-	}
 
-	// topics
-	stop = false
-	topics := []*sns.Topic{}
-	paramsTopics := &sns.ListTopicsInput{}
-	for !stop {
-		responseTopics, err := s.SNS.ListTopics(paramsTopics)
-		if err == nil {
-			topics = append(topics, responseTopics.Topics...)
-
-			if responseTopics.NextToken != nil {
-				paramsTopics.NextToken = responseTopics.NextToken
-			} else {
-				stop = true
-			}
-		} else {
-			return -1, time.Minute * 10, nil, err
-		}
+		s.SNS.ListEndpointsByPlatformApplicationPages(params, func(p *sns.ListEndpointsByPlatformApplicationOutput, lastPage bool) bool {
+			applications[i].EndpointsCount += int64(len(p.Endpoints))
+			return !lastPage
+		})
 	}
 
 	s.mutex.Lock()
 	s.applications = applications
+	s.mutex.Unlock()
+
+	return -1, time.Minute * 10, nil, err
+}
+
+func (s *AwsService) getSubscriptionsJob(attempts int64, _ chan bool, args ...interface{}) (int64, time.Duration, interface{}, error) {
+	subscriptions := []*sns.Subscription{}
+	params := &sns.ListSubscriptionsInput{}
+
+	err := s.SNS.ListSubscriptionsPages(params, func(p *sns.ListSubscriptionsOutput, lastPage bool) bool {
+		subscriptions = append(subscriptions, p.Subscriptions...)
+		return !lastPage
+	})
+
+	s.mutex.Lock()
 	s.subscriptions = subscriptions
+	s.mutex.Unlock()
+
+	return -1, time.Minute * 10, nil, err
+}
+
+func (s *AwsService) getTopicsJob(attempts int64, _ chan bool, args ...interface{}) (int64, time.Duration, interface{}, error) {
+	topics := []*sns.Topic{}
+	params := &sns.ListTopicsInput{}
+
+	err := s.SNS.ListTopicsPages(params, func(p *sns.ListTopicsOutput, lastPage bool) bool {
+		topics = append(topics, p.Topics...)
+		return !lastPage
+	})
+
+	s.mutex.Lock()
 	s.topics = topics
 	s.mutex.Unlock()
 
-	return -1, time.Hour, nil, nil
+	return -1, time.Minute * 10, nil, err
 }
 
 func (s *AwsService) GetApplications() []AwsSnsApplication {
