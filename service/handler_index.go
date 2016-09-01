@@ -16,8 +16,8 @@ func (h *IndexHandler) Handle() {
 
 	service := h.Service.(*AwsService)
 	h.View.Context["Services"] = service.Aws.GetServices()
-	h.View.Context["Applications"] = service.applications
-	h.View.Context["Subscriptions"] = service.subscriptions
-	h.View.Context["Topics"] = service.topics
+	h.View.Context["Applications"] = service.GetApplications()
+	h.View.Context["Subscriptions"] = service.GetSubscriptions()
+	h.View.Context["Topics"] = service.GetTopics()
 	h.View.Context["SDKVersion"] = aws.SDKVersion
 }

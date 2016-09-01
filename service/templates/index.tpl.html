@@ -33,6 +33,7 @@
                         <th>Application ARN</th>
                         <th>Certificate expiration</th>
                         <th>Endpoints</th>
+                        <th>Last update</th>
                     </thead>
                     <tbody>
                     {{ range $i, $application := .Applications }}
@@ -40,7 +41,8 @@
                         <td>{{ add $i 1 }}</td>
                         <td>{{ $application.Arn }}</td>
                         <td>{{ $application.CertificateExpirationDate }}</td>
-                        <td>{{ $application.EndpointsCount }}</td>
+                        <td>{{ $application.EndpointsCount }} / {{ $application.EndpointsEnabledCount }}</td>
+                        <td>{{ $application.LastUpdate }}</td>
                     </tr>
                     {{ end }}
                     </tbody>

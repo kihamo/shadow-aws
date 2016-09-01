@@ -7,6 +7,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sns"
+	"github.com/kihamo/go-workers/task"
 	"github.com/kihamo/shadow"
 	"github.com/kihamo/shadow-aws/resource"
 	r "github.com/kihamo/shadow/resource"
@@ -14,8 +15,10 @@ import (
 
 type AwsSnsApplication struct {
 	Arn                       string
-	EndpointsCount            int64
+	EndpointsCount            int
+	EndpointsEnabledCount     int
 	CertificateExpirationDate *time.Time
+	LastUpdate                time.Time
 }
 
 type AwsService struct {
@@ -27,7 +30,7 @@ type AwsService struct {
 
 	mutex sync.RWMutex
 
-	applications  []AwsSnsApplication
+	applications  map[string]AwsSnsApplication
 	subscriptions []*sns.Subscription
 	topics        []*sns.Topic
 }
@@ -57,59 +60,103 @@ func (s *AwsService) Init(a *shadow.Application) error {
 }
 
 func (s *AwsService) Run() error {
+	s.applications = map[string]AwsSnsApplication{}
+
 	if s.application.HasResource("workers") {
-		workers, _ := s.application.GetResource("workers")
-		workers.(*r.Workers).AddNamedTaskByFunc("aws.updater.applications", s.getApplicationsJob)
-		workers.(*r.Workers).AddNamedTaskByFunc("aws.updater.subscriptions", s.getSubscriptionsJob)
-		workers.(*r.Workers).AddNamedTaskByFunc("aws.updater.topics", s.getTopicsJob)
+		resourceWorkers, _ := s.application.GetResource("workers")
+		workers := resourceWorkers.(*r.Workers)
+
+		workers.AddNamedTaskByFunc("aws.updater.applications", s.getApplicationsJob)
+		workers.AddNamedTaskByFunc("aws.updater.subscriptions", s.getSubscriptionsJob)
+		workers.AddNamedTaskByFunc("aws.updater.topics", s.getTopicsJob)
+
+		t := task.NewTask(s.getEndpointsJob)
+		t.SetName("aws.updater.endpoints")
+		t.SetDuration(time.Minute)
+		workers.AddTask(t)
 	}
 
 	return nil
 }
 
 func (s *AwsService) getApplicationsJob(attempts int64, _ chan bool, args ...interface{}) (int64, time.Duration, interface{}, error) {
-	applications := []AwsSnsApplication{}
+	lastUpdate := time.Now()
 	params := &sns.ListPlatformApplicationsInput{}
 
 	err := s.SNS.ListPlatformApplicationsPages(params, func(p *sns.ListPlatformApplicationsOutput, lastPage bool) bool {
 		for _, a := range p.PlatformApplications {
-			application := AwsSnsApplication{
-				Arn:            aws.StringValue(a.PlatformApplicationArn),
-				EndpointsCount: -1,
+			app := AwsSnsApplication{
+				Arn:                   aws.StringValue(a.PlatformApplicationArn),
+				EndpointsCount:        -1,
+				EndpointsEnabledCount: -1,
+				LastUpdate:            lastUpdate,
 			}
 
 			if dateRaw, ok := a.Attributes["AppleCertificateExpirationDate"]; ok {
 				if dateValue, err := time.Parse(time.RFC3339, aws.StringValue(dateRaw)); err == nil {
-					application.CertificateExpirationDate = &dateValue
+					app.CertificateExpirationDate = &dateValue
 				}
 			}
 
-			applications = append(applications, application)
+			s.mutex.Lock()
+			s.applications[app.Arn] = app
+			s.mutex.Unlock()
 		}
 
 		return !lastPage
 	})
 
 	s.mutex.Lock()
-	s.applications = applications
-	s.mutex.Unlock()
-
-	for i, application := range applications {
-		params := &sns.ListEndpointsByPlatformApplicationInput{
-			PlatformApplicationArn: aws.String(application.Arn),
+	for key, application := range s.applications {
+		if application.LastUpdate.Before(lastUpdate) {
+			delete(s.applications, key)
 		}
-
-		s.SNS.ListEndpointsByPlatformApplicationPages(params, func(p *sns.ListEndpointsByPlatformApplicationOutput, lastPage bool) bool {
-			applications[i].EndpointsCount += int64(len(p.Endpoints))
-			return !lastPage
-		})
 	}
-
-	s.mutex.Lock()
-	s.applications = applications
 	s.mutex.Unlock()
 
 	return -1, time.Minute * 10, nil, err
+}
+
+func (s *AwsService) getEndpointsJob(attempts int64, _ chan bool, args ...interface{}) (int64, time.Duration, interface{}, error) {
+	for _, app := range s.GetApplications() {
+		params := &sns.ListEndpointsByPlatformApplicationInput{
+			PlatformApplicationArn: aws.String(app.Arn),
+		}
+
+		s.mutex.RLock()
+		_, ok := s.applications[app.Arn]
+		s.mutex.RUnlock()
+		if !ok {
+			continue
+		}
+
+		app.LastUpdate = time.Now()
+		err := s.SNS.ListEndpointsByPlatformApplicationPages(params, func(p *sns.ListEndpointsByPlatformApplicationOutput, lastPage bool) bool {
+			app.EndpointsCount = len(p.Endpoints)
+
+			for _, point := range p.Endpoints {
+				if enabled, ok := point.Attributes["Enabled"]; ok && aws.StringValue(enabled) == "true" {
+					app.EndpointsEnabledCount++
+				}
+			}
+
+			s.mutex.Lock()
+			defer s.mutex.Unlock()
+			if _, ok := s.applications[app.Arn]; ok {
+				s.applications[app.Arn] = app
+			} else {
+				return false
+			}
+
+			return !lastPage
+		})
+
+		if err != nil {
+			return -1, time.Minute * 60, nil, err
+		}
+	}
+
+	return -1, time.Minute * 60, nil, nil
 }
 
 func (s *AwsService) getSubscriptionsJob(attempts int64, _ chan bool, args ...interface{}) (int64, time.Duration, interface{}, error) {
@@ -148,7 +195,15 @@ func (s *AwsService) GetApplications() []AwsSnsApplication {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
-	return s.applications
+	applications := make([]AwsSnsApplication, len(s.applications))
+
+	i := 0
+	for _, application := range s.applications {
+		applications[i] = application
+		i++
+	}
+
+	return applications
 }
 
 func (s *AwsService) GetSubscriptions() []*sns.Subscription {
