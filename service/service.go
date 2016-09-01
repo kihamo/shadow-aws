@@ -5,11 +5,17 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/kihamo/shadow"
 	"github.com/kihamo/shadow-aws/resource"
 	r "github.com/kihamo/shadow/resource"
 )
+
+type AwsSnsApplication struct {
+	Arn                       string
+	CertificateExpirationDate *time.Time
+}
 
 type AwsService struct {
 	application *shadow.Application
@@ -20,7 +26,7 @@ type AwsService struct {
 
 	mutex sync.RWMutex
 
-	applications  []*sns.PlatformApplication
+	applications  []AwsSnsApplication
 	subscriptions []*sns.Subscription
 	topics        []*sns.Topic
 }
@@ -62,12 +68,24 @@ func (s *AwsService) getStatsJob(attempts int64, _ chan bool, args ...interface{
 	var stop bool
 
 	// applications
-	applications := []*sns.PlatformApplication{}
+	applications := []AwsSnsApplication{}
 	paramsApplications := &sns.ListPlatformApplicationsInput{}
 	for !stop {
 		responseApps, err := s.SNS.ListPlatformApplications(paramsApplications)
 		if err == nil {
-			applications = append(applications, responseApps.PlatformApplications...)
+			for _, a := range responseApps.PlatformApplications {
+				snsApplication := AwsSnsApplication{
+					Arn: aws.StringValue(a.PlatformApplicationArn),
+				}
+
+				if dateRaw, ok := a.Attributes["AppleCertificateExpirationDate"]; ok {
+					if dateValue, err := time.Parse(time.RFC3339, aws.StringValue(dateRaw)); err == nil {
+						snsApplication.CertificateExpirationDate = &dateValue
+					}
+				}
+
+				applications = append(applications, snsApplication)
+			}
 
 			if responseApps.NextToken != nil {
 				paramsApplications.NextToken = responseApps.NextToken
@@ -126,7 +144,7 @@ func (s *AwsService) getStatsJob(attempts int64, _ chan bool, args ...interface{
 	return -1, time.Hour, nil, nil
 }
 
-func (s *AwsService) GetApplications() []*sns.PlatformApplication {
+func (s *AwsService) GetApplications() []AwsSnsApplication {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
