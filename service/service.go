@@ -7,10 +7,13 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sns"
-	"github.com/kihamo/go-workers/task"
 	"github.com/kihamo/shadow"
 	"github.com/kihamo/shadow-aws/resource"
 	r "github.com/kihamo/shadow/resource"
+)
+
+const (
+	updateEndpointsBulk = 5
 )
 
 type AwsSnsApplication struct {
@@ -69,11 +72,6 @@ func (s *AwsService) Run() error {
 		workers.AddNamedTaskByFunc("aws.updater.applications", s.getApplicationsJob)
 		workers.AddNamedTaskByFunc("aws.updater.subscriptions", s.getSubscriptionsJob)
 		workers.AddNamedTaskByFunc("aws.updater.topics", s.getTopicsJob)
-
-		t := task.NewTask(s.getEndpointsJob)
-		t.SetName("aws.updater.endpoints")
-		t.SetDuration(time.Minute)
-		workers.AddTask(t)
 	}
 
 	return nil
@@ -106,6 +104,10 @@ func (s *AwsService) getApplicationsJob(attempts int64, _ chan bool, args ...int
 		return !lastPage
 	})
 
+	if err != nil {
+		s.logger.Errorf("Update applications error %s", err.Error())
+	}
+
 	s.mutex.Lock()
 	for key, application := range s.applications {
 		if application.LastUpdate.Before(lastUpdate) {
@@ -114,11 +116,34 @@ func (s *AwsService) getApplicationsJob(attempts int64, _ chan bool, args ...int
 	}
 	s.mutex.Unlock()
 
+	if attempts == 1 {
+		resourceWorkers, _ := s.application.GetResource("workers")
+		resourceWorkers.(*r.Workers).AddNamedTaskByFunc("aws.updater.endpoints", s.getEndpointsConsolidatedJob)
+	}
+
 	return -1, time.Minute * 10, nil, err
 }
 
+func (s *AwsService) getEndpointsConsolidatedJob(attempts int64, _ chan bool, args ...interface{}) (int64, time.Duration, interface{}, error) {
+	applications := s.GetApplications()
+
+	resourceWorkers, _ := s.application.GetResource("workers")
+	workers := resourceWorkers.(*r.Workers)
+
+	for i := 0; i < len(applications); i += updateEndpointsBulk {
+		stop := i + updateEndpointsBulk
+		if stop > len(applications) {
+			stop = len(applications)
+		}
+
+		workers.AddTaskByFunc(s.getEndpointsJob, applications[i:stop])
+	}
+
+	return -1, time.Minute * 60, nil, nil
+}
+
 func (s *AwsService) getEndpointsJob(attempts int64, _ chan bool, args ...interface{}) (int64, time.Duration, interface{}, error) {
-	for _, app := range s.GetApplications() {
+	for _, app := range args[0].([]AwsSnsApplication) {
 		params := &sns.ListEndpointsByPlatformApplicationInput{
 			PlatformApplicationArn: aws.String(app.Arn),
 		}
@@ -130,9 +155,12 @@ func (s *AwsService) getEndpointsJob(attempts int64, _ chan bool, args ...interf
 			continue
 		}
 
+		app.EndpointsCount = 0
+		app.EndpointsEnabledCount = 0
 		app.LastUpdate = time.Now()
+
 		err := s.SNS.ListEndpointsByPlatformApplicationPages(params, func(p *sns.ListEndpointsByPlatformApplicationOutput, lastPage bool) bool {
-			app.EndpointsCount = len(p.Endpoints)
+			app.EndpointsCount += len(p.Endpoints)
 
 			for _, point := range p.Endpoints {
 				if enabled, ok := point.Attributes["Enabled"]; ok && aws.StringValue(enabled) == "true" {
@@ -140,23 +168,32 @@ func (s *AwsService) getEndpointsJob(attempts int64, _ chan bool, args ...interf
 				}
 			}
 
-			s.mutex.Lock()
-			defer s.mutex.Unlock()
-			if _, ok := s.applications[app.Arn]; ok {
-				s.applications[app.Arn] = app
-			} else {
-				return false
-			}
-
 			return !lastPage
 		})
 
-		if err != nil {
-			return -1, time.Minute * 60, nil, err
+		s.mutex.Lock()
+
+		if _, ok := s.applications[app.Arn]; ok {
+			s.applications[app.Arn] = app
 		}
+
+		if err != nil {
+			s.logger.WithFields(logrus.Fields{
+				"application.ednpoints":         app.EndpointsCount,
+				"application.ednpoints-enabled": app.EndpointsEnabledCount,
+				"error": err.Error(),
+			}).Errorf("Update apn %s", app.Arn)
+		} else {
+			s.logger.WithFields(logrus.Fields{
+				"application.ednpoints":         app.EndpointsCount,
+				"application.ednpoints-enabled": app.EndpointsEnabledCount,
+			}).Infof("Update apn %s", app.Arn)
+		}
+
+		s.mutex.Unlock()
 	}
 
-	return -1, time.Minute * 60, nil, nil
+	return 1, 0, nil, nil
 }
 
 func (s *AwsService) getSubscriptionsJob(attempts int64, _ chan bool, args ...interface{}) (int64, time.Duration, interface{}, error) {
@@ -167,6 +204,10 @@ func (s *AwsService) getSubscriptionsJob(attempts int64, _ chan bool, args ...in
 		subscriptions = append(subscriptions, p.Subscriptions...)
 		return !lastPage
 	})
+
+	if err != nil {
+		s.logger.Errorf("Update subscriptions error %s", err.Error())
+	}
 
 	s.mutex.Lock()
 	s.subscriptions = subscriptions
@@ -183,6 +224,10 @@ func (s *AwsService) getTopicsJob(attempts int64, _ chan bool, args ...interface
 		topics = append(topics, p.Topics...)
 		return !lastPage
 	})
+
+	if err != nil {
+		s.logger.Errorf("Update topics error %s", err.Error())
+	}
 
 	s.mutex.Lock()
 	s.topics = topics
