@@ -12,10 +12,6 @@ import (
 	r "github.com/kihamo/shadow/resource"
 )
 
-const (
-	updateEndpointsBulk = 5
-)
-
 type AwsSnsApplication struct {
 	Arn                       string
 	EndpointsCount            int
@@ -29,6 +25,7 @@ type AwsService struct {
 
 	Aws    *resource.Aws
 	SNS    *sns.SNS
+	config *r.Config
 	logger *logrus.Entry
 
 	mutex sync.RWMutex
@@ -44,6 +41,12 @@ func (s *AwsService) GetName() string {
 
 func (s *AwsService) Init(a *shadow.Application) error {
 	s.application = a
+
+	resourceConfig, err := a.GetResource("config")
+	if err != nil {
+		return err
+	}
+	s.config = resourceConfig.(*r.Config)
 
 	resourceLogger, err := a.GetResource("logger")
 	if err != nil {
@@ -78,16 +81,28 @@ func (s *AwsService) Run() error {
 }
 
 func (s *AwsService) getApplicationsJob(attempts int64, _ chan bool, args ...interface{}) (int64, time.Duration, interface{}, error) {
-	lastUpdate := time.Now()
+	lastUpdate := time.Now().UTC()
 	params := &sns.ListPlatformApplicationsInput{}
 
 	err := s.SNS.ListPlatformApplicationsPages(params, func(p *sns.ListPlatformApplicationsOutput, lastPage bool) bool {
+		s.mutex.Lock()
+		defer s.mutex.Unlock()
+
+		var app AwsSnsApplication
+
 		for _, a := range p.PlatformApplications {
-			app := AwsSnsApplication{
-				Arn:                   aws.StringValue(a.PlatformApplicationArn),
-				EndpointsCount:        -1,
-				EndpointsEnabledCount: -1,
-				LastUpdate:            lastUpdate,
+			arn := aws.StringValue(a.PlatformApplicationArn)
+
+			if _, ok := s.applications[arn]; ok {
+				app = s.applications[arn]
+				app.LastUpdate = lastUpdate
+			} else {
+				app = AwsSnsApplication{
+					Arn:                   arn,
+					EndpointsCount:        -1,
+					EndpointsEnabledCount: -1,
+					LastUpdate:            lastUpdate,
+				}
 			}
 
 			if dateRaw, ok := a.Attributes["AppleCertificateExpirationDate"]; ok {
@@ -96,9 +111,7 @@ func (s *AwsService) getApplicationsJob(attempts int64, _ chan bool, args ...int
 				}
 			}
 
-			s.mutex.Lock()
-			s.applications[app.Arn] = app
-			s.mutex.Unlock()
+			s.applications[arn] = app
 		}
 
 		return !lastPage
@@ -121,7 +134,7 @@ func (s *AwsService) getApplicationsJob(attempts int64, _ chan bool, args ...int
 		resourceWorkers.(*r.Workers).AddNamedTaskByFunc("aws.updater.endpoints", s.getEndpointsConsolidatedJob)
 	}
 
-	return -1, time.Minute * 10, nil, err
+	return -1, s.config.GetDuration("aws.updater_applications_duration"), nil, err
 }
 
 func (s *AwsService) getEndpointsConsolidatedJob(attempts int64, _ chan bool, args ...interface{}) (int64, time.Duration, interface{}, error) {
@@ -129,9 +142,10 @@ func (s *AwsService) getEndpointsConsolidatedJob(attempts int64, _ chan bool, ar
 
 	resourceWorkers, _ := s.application.GetResource("workers")
 	workers := resourceWorkers.(*r.Workers)
+	bulkCount := s.config.GetInt("aws.updater_endpoints_bulk")
 
-	for i := 0; i < len(applications); i += updateEndpointsBulk {
-		stop := i + updateEndpointsBulk
+	for i := 0; i < len(applications); i += bulkCount {
+		stop := i + bulkCount
 		if stop > len(applications) {
 			stop = len(applications)
 		}
@@ -139,7 +153,7 @@ func (s *AwsService) getEndpointsConsolidatedJob(attempts int64, _ chan bool, ar
 		workers.AddTaskByFunc(s.getEndpointsJob, applications[i:stop])
 	}
 
-	return -1, time.Minute * 60, nil, nil
+	return -1, s.config.GetDuration("aws.updater_endpoints_duration"), nil, nil
 }
 
 func (s *AwsService) getEndpointsJob(attempts int64, _ chan bool, args ...interface{}) (int64, time.Duration, interface{}, error) {
@@ -157,7 +171,7 @@ func (s *AwsService) getEndpointsJob(attempts int64, _ chan bool, args ...interf
 
 		app.EndpointsCount = 0
 		app.EndpointsEnabledCount = 0
-		app.LastUpdate = time.Now()
+		app.LastUpdate = time.Now().UTC()
 
 		err := s.SNS.ListEndpointsByPlatformApplicationPages(params, func(p *sns.ListEndpointsByPlatformApplicationOutput, lastPage bool) bool {
 			app.EndpointsCount += len(p.Endpoints)
@@ -213,7 +227,7 @@ func (s *AwsService) getSubscriptionsJob(attempts int64, _ chan bool, args ...in
 	s.subscriptions = subscriptions
 	s.mutex.Unlock()
 
-	return -1, time.Minute * 10, nil, err
+	return -1, s.config.GetDuration("aws.updater_subscriptions_duration"), nil, err
 }
 
 func (s *AwsService) getTopicsJob(attempts int64, _ chan bool, args ...interface{}) (int64, time.Duration, interface{}, error) {
@@ -233,7 +247,7 @@ func (s *AwsService) getTopicsJob(attempts int64, _ chan bool, args ...interface
 	s.topics = topics
 	s.mutex.Unlock()
 
-	return -1, time.Minute * 10, nil, err
+	return -1, s.config.GetDuration("aws.updater_topics_duration"), nil, err
 }
 
 func (s *AwsService) GetApplications() []AwsSnsApplication {
