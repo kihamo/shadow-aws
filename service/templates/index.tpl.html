@@ -30,6 +30,7 @@
                 <table class="table table-hover table-striped">
                     <thead>
                         <th>#</th>
+                        <th>IAM</th>
                         <th>Application ARN</th>
                         <th>Certificate expiration</th>
                         <th>Endpoints</th>
@@ -39,6 +40,13 @@
                     {{ range $i, $application := .Applications }}
                     <tr>
                         <td>{{ add $i 1 }}</td>
+                        <td class="text-center">
+                            {{if $application.IsIAM}}
+                            <span class="glyphicon glyphicon-ok" style="color: #5cb85c"></span>
+                            {{else}}
+                            <span class="glyphicon glyphicon-remove" style="color: #d9534f"></span>
+                            {{end}}
+                        </td>
                         <td>{{ $application.Arn }}</td>
                         <td>{{ $application.CertificateExpirationDate }}</td>
                         <td>{{ $application.EndpointsCount }} / {{ $application.EndpointsEnabledCount }}</td>

@@ -21,6 +21,18 @@ type AwsSnsApplication struct {
 	LastUpdate                time.Time
 }
 
+func (a AwsSnsApplication) IsIAM() bool {
+	if _, ok := a.AwsAttributes["SuccessFeedbackRoleArn"]; !ok {
+		return false
+	}
+
+	if _, ok := a.AwsAttributes["FailureFeedbackRoleArn"]; !ok {
+		return false
+	}
+
+	return true
+}
+
 type AwsService struct {
 	application *shadow.Application
 
