@@ -14,6 +14,7 @@ import (
 
 type AwsSnsApplication struct {
 	Arn                       string
+	AwsAttributes             map[string]*string
 	EndpointsCount            int
 	EndpointsEnabledCount     int
 	CertificateExpirationDate *time.Time
@@ -99,6 +100,7 @@ func (s *AwsService) getApplicationsJob(attempts int64, _ chan bool, args ...int
 			} else {
 				app = AwsSnsApplication{
 					Arn:                   arn,
+					AwsAttributes:         a.Attributes,
 					EndpointsCount:        -1,
 					EndpointsEnabledCount: -1,
 					LastUpdate:            lastUpdate,
