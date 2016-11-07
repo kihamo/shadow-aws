@@ -49,7 +49,16 @@
                         </td>
                         <td>{{ $application.Arn }}</td>
                         <td>{{ $application.CertificateExpirationDate }}</td>
-                        <td>{{ $application.EndpointsCount }} / {{ $application.EndpointsEnabledCount }}</td>
+                        <td>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-success" style="min-width:2em;width:{{ $application.GetEnabledPercent }}%">
+                                    {{ $application.GetEnabledCount }}
+                                </div>
+                                <div class="progress-bar progress-bar-warning" style="min-width:2em;width:{{ $application.GetDisabledPercent }}%">
+                                    {{ $application.GetDisabledCount }}
+                                </div>
+                            </div>
+                        </td>
                         <td>{{ $application.LastUpdate }}</td>
                     </tr>
                     {{ end }}

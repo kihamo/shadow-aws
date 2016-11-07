@@ -33,6 +33,38 @@ func (a AwsSnsApplication) IsIAM() bool {
 	return true
 }
 
+func (a AwsSnsApplication) GetEnabledCount() int {
+	if a.EndpointsEnabledCount <= 0 {
+		return 0
+	}
+
+	return a.EndpointsEnabledCount
+}
+
+func (a AwsSnsApplication) GetEnabledPercent() int {
+	if a.EndpointsCount <= 0 {
+		return 0
+	}
+
+	return (100 * a.EndpointsEnabledCount) / a.EndpointsCount
+}
+
+func (a AwsSnsApplication) GetDisabledCount() int {
+	if a.EndpointsCount <= 0 || a.EndpointsEnabledCount <= 0 {
+		return 0
+	}
+
+	return a.EndpointsCount - a.EndpointsEnabledCount
+}
+
+func (a AwsSnsApplication) GetDisabledPercent() int {
+	if a.EndpointsCount <= 0 {
+		return 0
+	}
+
+	return 100 - a.GetEnabledPercent()
+}
+
 type AwsService struct {
 	application *shadow.Application
 
