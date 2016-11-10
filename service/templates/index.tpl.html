@@ -38,7 +38,7 @@
                     </thead>
                     <tbody>
                     {{ range $i, $application := .Applications }}
-                    <tr>
+                    <tr {{if not $application.Enabled}}class="danger"{{end}}>
                         <td>{{ add $i 1 }}</td>
                         <td class="text-center">
                             {{if $application.IsIAM}}

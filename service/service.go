@@ -15,6 +15,7 @@ import (
 type AwsSnsApplication struct {
 	Arn                       string
 	AwsAttributes             map[string]*string
+	Enabled                   bool
 	EndpointsCount            int
 	EndpointsEnabledCount     int
 	CertificateExpirationDate *time.Time
@@ -145,6 +146,7 @@ func (s *AwsService) getApplicationsJob(attempts int64, _ chan bool, args ...int
 				app = AwsSnsApplication{
 					Arn:                   arn,
 					AwsAttributes:         a.Attributes,
+					Enabled:               true,
 					EndpointsCount:        -1,
 					EndpointsEnabledCount: -1,
 					LastUpdate:            lastUpdate,
@@ -155,6 +157,10 @@ func (s *AwsService) getApplicationsJob(attempts int64, _ chan bool, args ...int
 				if dateValue, err := time.Parse(time.RFC3339, aws.StringValue(dateRaw)); err == nil {
 					app.CertificateExpirationDate = &dateValue
 				}
+			}
+
+			if dateRaw, ok := a.Attributes["Enabled"]; ok && aws.StringValue(dateRaw) == "false" {
+				app.Enabled = false
 			}
 
 			s.applications[arn] = app
