@@ -7,6 +7,11 @@ import (
 func (s *AwsService) GetConfigVariables() []resource.ConfigVariable {
 	return []resource.ConfigVariable{
 		resource.ConfigVariable{
+			Key:   "aws.run_updater_on_startup",
+			Value: true,
+			Usage: "Run updater jobs on startup",
+		},
+		resource.ConfigVariable{
 			Key:   "aws.updater_applications_duration",
 			Value: "10m",
 			Usage: "Duration for AWS applications updater",

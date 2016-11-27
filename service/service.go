@@ -7,6 +7,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sns"
+	"github.com/kihamo/go-workers/task"
 	"github.com/kihamo/shadow"
 	"github.com/kihamo/shadow-aws/resource"
 	r "github.com/kihamo/shadow/resource"
@@ -114,10 +115,30 @@ func (s *AwsService) Run() error {
 	if s.application.HasResource("workers") {
 		resourceWorkers, _ := s.application.GetResource("workers")
 		workers := resourceWorkers.(*r.Workers)
+		runOnStartUp := s.config.GetBool("aws.run_updater_on_startup")
 
-		workers.AddNamedTaskByFunc("aws.updater.applications", s.getApplicationsJob)
-		workers.AddNamedTaskByFunc("aws.updater.subscriptions", s.getSubscriptionsJob)
-		workers.AddNamedTaskByFunc("aws.updater.topics", s.getTopicsJob)
+		var t *task.Task
+
+		t = task.NewTask(s.getApplicationsJob)
+		t.SetName("aws.updater.applications")
+		if !runOnStartUp {
+			t.SetDuration(s.config.GetDuration("aws.updater_applications_duration"))
+		}
+		workers.AddTask(t)
+
+		t = task.NewTask(s.getSubscriptionsJob)
+		t.SetName("aws.updater.subscriptions")
+		if !runOnStartUp {
+			t.SetDuration(s.config.GetDuration("aws.updater_subscriptions_duration"))
+		}
+		workers.AddTask(t)
+
+		t = task.NewTask(s.getTopicsJob)
+		t.SetName("aws.updater.topics")
+		if !runOnStartUp {
+			t.SetDuration(s.config.GetDuration("aws.updater_topics_duration"))
+		}
+		workers.AddTask(t)
 	}
 
 	return nil
