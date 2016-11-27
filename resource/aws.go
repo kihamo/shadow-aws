@@ -48,7 +48,7 @@ func (r *Aws) GetConfigVariables() []resource.ConfigVariable {
 		},
 		{
 			Key:   "aws.region",
-			Value: "us-east-1",
+			Value: "",
 			Usage: "AWS region",
 		},
 	}
