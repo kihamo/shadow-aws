@@ -2,6 +2,7 @@ package resource
 
 import (
 	"strings"
+	"sync"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
@@ -17,7 +18,9 @@ type Aws struct {
 	awsConfig   *aws.Config
 	config      *resource.Config
 	logger      *logrus.Entry
-	services    map[string]interface{}
+
+	mutex    sync.RWMutex
+	services map[string]interface{}
 }
 
 type AwsArnParse struct {
@@ -98,6 +101,9 @@ func (r *Aws) Run() error {
 }
 
 func (r *Aws) GetSNS() *sns.SNS {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
 	if _, ok := r.services["sns"]; !ok {
 		r.services["sns"] = sns.New(session.New(r.awsConfig))
 	}
@@ -131,5 +137,8 @@ func (r *Aws) ParseArn(arn string) *AwsArnParse {
 }
 
 func (r *Aws) GetServices() map[string]interface{} {
+	r.mutex.RLock()
+	r.mutex.RUnlock()
+
 	return r.services
 }
