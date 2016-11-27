@@ -70,7 +70,6 @@ type AwsService struct {
 	application *shadow.Application
 
 	Aws    *resource.Aws
-	SNS    *sns.SNS
 	config *r.Config
 	logger *logrus.Entry
 
@@ -106,8 +105,6 @@ func (s *AwsService) Init(a *shadow.Application) error {
 	}
 	s.Aws = resourceAws.(*resource.Aws)
 
-	s.SNS = s.Aws.GetSNS()
-
 	return nil
 }
 
@@ -130,7 +127,7 @@ func (s *AwsService) getApplicationsJob(attempts int64, _ chan bool, args ...int
 	lastUpdate := time.Now().UTC()
 	params := &sns.ListPlatformApplicationsInput{}
 
-	err := s.SNS.ListPlatformApplicationsPages(params, func(p *sns.ListPlatformApplicationsOutput, lastPage bool) bool {
+	err := s.Aws.GetSNS().ListPlatformApplicationsPages(params, func(p *sns.ListPlatformApplicationsOutput, lastPage bool) bool {
 		s.mutex.Lock()
 		defer s.mutex.Unlock()
 
@@ -225,7 +222,7 @@ func (s *AwsService) getEndpointsJob(attempts int64, _ chan bool, args ...interf
 		app.EndpointsEnabledCount = 0
 		app.LastUpdate = time.Now().UTC()
 
-		err := s.SNS.ListEndpointsByPlatformApplicationPages(params, func(p *sns.ListEndpointsByPlatformApplicationOutput, lastPage bool) bool {
+		err := s.Aws.GetSNS().ListEndpointsByPlatformApplicationPages(params, func(p *sns.ListEndpointsByPlatformApplicationOutput, lastPage bool) bool {
 			app.EndpointsCount += len(p.Endpoints)
 
 			for _, point := range p.Endpoints {
@@ -266,7 +263,7 @@ func (s *AwsService) getSubscriptionsJob(attempts int64, _ chan bool, args ...in
 	subscriptions := []*sns.Subscription{}
 	params := &sns.ListSubscriptionsInput{}
 
-	err := s.SNS.ListSubscriptionsPages(params, func(p *sns.ListSubscriptionsOutput, lastPage bool) bool {
+	err := s.Aws.GetSNS().ListSubscriptionsPages(params, func(p *sns.ListSubscriptionsOutput, lastPage bool) bool {
 		subscriptions = append(subscriptions, p.Subscriptions...)
 		return !lastPage
 	})
@@ -286,7 +283,7 @@ func (s *AwsService) getTopicsJob(attempts int64, _ chan bool, args ...interface
 	topics := []*sns.Topic{}
 	params := &sns.ListTopicsInput{}
 
-	err := s.SNS.ListTopicsPages(params, func(p *sns.ListTopicsOutput, lastPage bool) bool {
+	err := s.Aws.GetSNS().ListTopicsPages(params, func(p *sns.ListTopicsOutput, lastPage bool) bool {
 		topics = append(topics, p.Topics...)
 		return !lastPage
 	})
