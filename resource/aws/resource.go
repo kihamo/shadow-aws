@@ -1,4 +1,4 @@
-package resource
+package aws
 
 import (
 	"strings"

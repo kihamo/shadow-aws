@@ -11,13 +11,14 @@ type IndexHandler struct {
 
 func (h *IndexHandler) Handle() {
 	h.SetTemplate("index.tpl.html")
-	h.View.Context["PageTitle"] = "Aws"
-	h.View.Context["PageHeader"] = "Amazon Web Service"
+	h.SetPageTitle("Aws")
+	h.SetPageHeader("Amazon Web Service")
 
 	service := h.Service.(*AwsService)
-	h.View.Context["Services"] = service.Aws.GetServices()
-	h.View.Context["Applications"] = service.GetApplications()
-	h.View.Context["Subscriptions"] = service.GetSubscriptions()
-	h.View.Context["Topics"] = service.GetTopics()
-	h.View.Context["SDKVersion"] = aws.SDKVersion
+
+	h.SetVar("Services", service.aws.GetServices())
+	h.SetVar("Applications", service.GetApplications())
+	h.SetVar("Subscriptions", service.GetSubscriptions())
+	h.SetVar("Topics", service.GetTopics())
+	h.SetVar("SDKVersion", aws.SDKVersion)
 }

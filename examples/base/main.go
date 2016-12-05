@@ -4,9 +4,12 @@ import (
 	"log"
 
 	"github.com/kihamo/shadow"
-	r "github.com/kihamo/shadow-aws/resource"
-	s "github.com/kihamo/shadow-aws/service"
+	"github.com/kihamo/shadow-aws/resource/aws"
+	"github.com/kihamo/shadow-aws/service"
 	"github.com/kihamo/shadow/resource"
+	"github.com/kihamo/shadow/resource/alerts"
+	"github.com/kihamo/shadow/resource/metrics"
+	"github.com/kihamo/shadow/resource/workers"
 	"github.com/kihamo/shadow/service/frontend"
 	"github.com/kihamo/shadow/service/system"
 )
@@ -17,13 +20,15 @@ func main() {
 			new(resource.Config),
 			new(resource.Logger),
 			new(resource.Template),
-			new(resource.Workers),
-			new(r.Aws),
+			new(alerts.Alerts),
+			new(metrics.Metrics),
+			new(workers.Workers),
+			new(aws.Aws),
 		},
 		[]shadow.Service{
 			new(frontend.FrontendService),
 			new(system.SystemService),
-			new(s.AwsService),
+			new(service.AwsService),
 		},
 		"Aws",
 		"1.0",
