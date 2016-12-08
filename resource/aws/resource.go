@@ -4,20 +4,21 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/kihamo/shadow"
-	"github.com/kihamo/shadow/resource"
+	"github.com/kihamo/shadow/resource/config"
+	"github.com/kihamo/shadow/resource/logger"
+	"github.com/rs/xlog"
 )
 
 type Aws struct {
 	application *shadow.Application
 	awsConfig   *aws.Config
-	config      *resource.Config
-	logger      *logrus.Entry
+	config      *config.Resource
+	logger      xlog.Logger
 
 	mutex    sync.RWMutex
 	services map[string]interface{}
@@ -37,26 +38,6 @@ func (r *Aws) GetName() string {
 	return "aws"
 }
 
-func (r *Aws) GetConfigVariables() []resource.ConfigVariable {
-	return []resource.ConfigVariable{
-		{
-			Key:   "aws.key",
-			Value: "",
-			Usage: "AWS access key ID",
-		},
-		{
-			Key:   "aws.secret",
-			Value: "",
-			Usage: "AWS secret access key",
-		},
-		{
-			Key:   "aws.region",
-			Value: "",
-			Usage: "AWS region",
-		},
-	}
-}
-
 func (r *Aws) Init(a *shadow.Application) error {
 	r.application = a
 	r.services = map[string]interface{}{}
@@ -66,7 +47,7 @@ func (r *Aws) Init(a *shadow.Application) error {
 		return err
 	}
 
-	r.config = resourceConfig.(*resource.Config)
+	r.config = resourceConfig.(*config.Resource)
 
 	return nil
 }
@@ -76,7 +57,7 @@ func (r *Aws) Run() error {
 	if err != nil {
 		return err
 	}
-	logger := resourceLogger.(*resource.Logger).Get(r.GetName())
+	logger := resourceLogger.(*logger.Resource).Get(r.GetName())
 
 	r.awsConfig = aws.NewConfig().
 		WithCredentials(credentials.NewStaticCredentials(r.config.GetString("aws.key"), r.config.GetString("aws.secret"), "")).
@@ -86,7 +67,7 @@ func (r *Aws) Run() error {
 		r.awsConfig.WithLogLevel(aws.LogDebug)
 	}
 
-	fields := logrus.Fields{
+	fields := xlog.F{
 		"region": *r.awsConfig.Region,
 	}
 
@@ -95,7 +76,7 @@ func (r *Aws) Run() error {
 		fields["key"] = credentials.AccessKeyID
 		fields["secret"] = credentials.SecretAccessKey
 	}
-	logger.WithFields(fields).Info("Connect AWS")
+	logger.Info("Connect AWS", fields)
 
 	return nil
 }

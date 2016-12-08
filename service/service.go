@@ -4,15 +4,17 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	sdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sns"
+	kit "github.com/go-kit/kit/metrics"
 	"github.com/kihamo/go-workers/task"
 	"github.com/kihamo/shadow"
 	"github.com/kihamo/shadow-aws/resource/aws"
-	"github.com/kihamo/shadow/resource"
+	"github.com/kihamo/shadow/resource/config"
+	"github.com/kihamo/shadow/resource/logger"
 	"github.com/kihamo/shadow/resource/metrics"
 	"github.com/kihamo/shadow/resource/workers"
+	"github.com/rs/xlog"
 )
 
 type AwsSnsApplication struct {
@@ -71,17 +73,23 @@ func (a AwsSnsApplication) GetDisabledPercent() int {
 
 type AwsService struct {
 	application *shadow.Application
+	config      *config.Resource
+	metrics     *metrics.Resource
+	workers     *workers.Resource
+	logger      xlog.Logger
 
-	aws     *aws.Aws
-	config  *resource.Config
-	logger  *logrus.Entry
-	metrics *metrics.Metrics
-
+	aws   *aws.Aws
 	mutex sync.RWMutex
 
 	applications  map[string]AwsSnsApplication
 	subscriptions []*sns.Subscription
 	topics        []*sns.Topic
+
+	metricApplicationsTotal  kit.Gauge
+	metricSubscriptionsTotal kit.Gauge
+	metricTopicsTotal        kit.Gauge
+	metricEndpointsTotal     kit.Gauge
+	metricEndpointsEnabled   kit.Gauge
 }
 
 func (s *AwsService) GetName() string {
@@ -95,13 +103,13 @@ func (s *AwsService) Init(a *shadow.Application) error {
 	if err != nil {
 		return err
 	}
-	s.config = resourceConfig.(*resource.Config)
+	s.config = resourceConfig.(*config.Resource)
 
 	resourceLogger, err := a.GetResource("logger")
 	if err != nil {
 		return err
 	}
-	s.logger = resourceLogger.(*resource.Logger).Get(s.GetName())
+	s.logger = resourceLogger.(*logger.Resource).Get(s.GetName())
 
 	resourceAws, err := a.GetResource("aws")
 	if err != nil {
@@ -111,7 +119,7 @@ func (s *AwsService) Init(a *shadow.Application) error {
 
 	if a.HasResource("metrics") {
 		resourceMetrics, _ := a.GetResource("metrics")
-		s.metrics = resourceMetrics.(*metrics.Metrics)
+		s.metrics = resourceMetrics.(*metrics.Resource)
 	}
 
 	return nil
@@ -121,8 +129,19 @@ func (s *AwsService) Run() error {
 	s.applications = map[string]AwsSnsApplication{}
 
 	if s.application.HasResource("workers") {
+		resourceMetrics, err := s.application.GetResource("metrics")
+		if err == nil {
+			rMetrics := resourceMetrics.(*metrics.Resource)
+
+			s.metricApplicationsTotal = rMetrics.NewGauge(MetricApplicationsTotal)
+			s.metricSubscriptionsTotal = rMetrics.NewGauge(MetricSubscriptionsTotal)
+			s.metricTopicsTotal = rMetrics.NewGauge(MetricTopicsTotal)
+			s.metricEndpointsTotal = rMetrics.NewGauge(MetricEndpointsTotal)
+			s.metricEndpointsEnabled = rMetrics.NewGauge(MetricEndpointsEnabled)
+		}
+
 		resourceWorkers, _ := s.application.GetResource("workers")
-		rWorkers := resourceWorkers.(*workers.Workers)
+		s.workers = resourceWorkers.(*workers.Resource)
 		runOnStartUp := s.config.GetBool("aws.run_updater_on_startup")
 
 		var t *task.Task
@@ -132,21 +151,21 @@ func (s *AwsService) Run() error {
 		if !runOnStartUp {
 			t.SetDuration(s.config.GetDuration("aws.updater_applications_duration"))
 		}
-		rWorkers.AddTask(t)
+		s.workers.AddTask(t)
 
 		t = task.NewTask(s.getSubscriptionsJob)
 		t.SetName("aws.updater.subscriptions")
 		if !runOnStartUp {
 			t.SetDuration(s.config.GetDuration("aws.updater_subscriptions_duration"))
 		}
-		rWorkers.AddTask(t)
+		s.workers.AddTask(t)
 
 		t = task.NewTask(s.getTopicsJob)
 		t.SetName("aws.updater.topics")
 		if !runOnStartUp {
 			t.SetDuration(s.config.GetDuration("aws.updater_topics_duration"))
 		}
-		rWorkers.AddTask(t)
+		s.workers.AddTask(t)
 	}
 
 	return nil
@@ -200,21 +219,20 @@ func (s *AwsService) getApplicationsJob(attempts int64, _ chan bool, args ...int
 	}
 
 	s.mutex.Lock()
+
+	if s.metricApplicationsTotal != nil {
+		s.metricApplicationsTotal.Set(float64(len(s.applications)))
+	}
+
 	for key, application := range s.applications {
 		if application.LastUpdate.Before(lastUpdate) {
 			delete(s.applications, key)
 		}
 	}
-
-	if s.metrics != nil {
-		s.metrics.NewCounter(MetricAwsTotalApplications).Inc(int64(len(s.applications)))
-	}
-
 	s.mutex.Unlock()
 
 	if attempts == 1 {
-		resourceWorkers, _ := s.application.GetResource("workers")
-		resourceWorkers.(*workers.Workers).AddNamedTaskByFunc("aws.updater.endpoints", s.getEndpointsConsolidatedJob)
+		s.workers.AddNamedTaskByFunc("aws.updater.endpoints", s.getEndpointsConsolidatedJob)
 	}
 
 	return -1, s.config.GetDuration("aws.updater_applications_duration"), nil, err
@@ -222,9 +240,6 @@ func (s *AwsService) getApplicationsJob(attempts int64, _ chan bool, args ...int
 
 func (s *AwsService) getEndpointsConsolidatedJob(attempts int64, _ chan bool, args ...interface{}) (int64, time.Duration, interface{}, error) {
 	applications := s.GetApplications()
-
-	resourceWorkers, _ := s.application.GetResource("workers")
-	rWorkers := resourceWorkers.(*workers.Workers)
 	bulkCount := s.config.GetInt("aws.updater_endpoints_bulk")
 
 	for i := 0; i < len(applications); i += bulkCount {
@@ -233,7 +248,7 @@ func (s *AwsService) getEndpointsConsolidatedJob(attempts int64, _ chan bool, ar
 			stop = len(applications)
 		}
 
-		rWorkers.AddTaskByFunc(s.getEndpointsJob, applications[i:stop])
+		s.workers.AddTaskByFunc(s.getEndpointsJob, applications[i:stop])
 	}
 
 	return -1, s.config.GetDuration("aws.updater_endpoints_duration"), nil, nil
@@ -268,6 +283,16 @@ func (s *AwsService) getEndpointsJob(attempts int64, _ chan bool, args ...interf
 			return !lastPage
 		})
 
+		if err == nil {
+			if s.metricEndpointsTotal != nil {
+				s.metricEndpointsTotal.With("arn", app.Arn).Set(float64(app.EndpointsCount))
+			}
+
+			if s.metricEndpointsEnabled != nil {
+				s.metricEndpointsEnabled.With("arn", app.Arn).Set(float64(app.EndpointsEnabledCount))
+			}
+		}
+
 		s.mutex.Lock()
 
 		if _, ok := s.applications[app.Arn]; ok {
@@ -275,16 +300,16 @@ func (s *AwsService) getEndpointsJob(attempts int64, _ chan bool, args ...interf
 		}
 
 		if err != nil {
-			s.logger.WithFields(logrus.Fields{
+			s.logger.Errorf("Update apn %s", app.Arn, xlog.F{
 				"application.ednpoints":         app.EndpointsCount,
 				"application.ednpoints-enabled": app.EndpointsEnabledCount,
 				"error": err.Error(),
-			}).Errorf("Update apn %s", app.Arn)
+			})
 		} else {
-			s.logger.WithFields(logrus.Fields{
+			s.logger.Infof("Update apn %s", app.Arn, xlog.F{
 				"application.ednpoints":         app.EndpointsCount,
 				"application.ednpoints-enabled": app.EndpointsEnabledCount,
-			}).Infof("Update apn %s", app.Arn)
+			})
 		}
 
 		s.mutex.Unlock()
@@ -304,15 +329,13 @@ func (s *AwsService) getSubscriptionsJob(attempts int64, _ chan bool, args ...in
 
 	if err != nil {
 		s.logger.Errorf("Update subscriptions error %s", err.Error())
+	} else if s.metricSubscriptionsTotal != nil {
+		s.metricSubscriptionsTotal.Set(float64(len(subscriptions)))
 	}
 
 	s.mutex.Lock()
 	s.subscriptions = subscriptions
 	s.mutex.Unlock()
-
-	if s.metrics != nil {
-		s.metrics.NewCounter(MetricAwsTotalSubscriptions).Inc(int64(len(subscriptions)))
-	}
 
 	return -1, s.config.GetDuration("aws.updater_subscriptions_duration"), nil, err
 }
@@ -328,15 +351,13 @@ func (s *AwsService) getTopicsJob(attempts int64, _ chan bool, args ...interface
 
 	if err != nil {
 		s.logger.Errorf("Update topics error %s", err.Error())
+	} else if s.metricTopicsTotal != nil {
+		s.metricTopicsTotal.Set(float64(len(topics)))
 	}
 
 	s.mutex.Lock()
 	s.topics = topics
 	s.mutex.Unlock()
-
-	if s.metrics != nil {
-		s.metrics.NewCounter(MetricAwsTotalTopics).Inc(int64(len(topics)))
-	}
 
 	return -1, s.config.GetDuration("aws.updater_topics_duration"), nil, err
 }
