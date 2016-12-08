@@ -4,7 +4,7 @@ import (
 	"github.com/kihamo/shadow/resource/config"
 )
 
-func (r *Aws) GetConfigVariables() []config.Variable {
+func (r *Resource) GetConfigVariables() []config.Variable {
 	return []config.Variable{
 		{
 			Key:   "aws.key",

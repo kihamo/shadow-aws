@@ -14,7 +14,7 @@ import (
 	"github.com/rs/xlog"
 )
 
-type Aws struct {
+type Resource struct {
 	application *shadow.Application
 	awsConfig   *aws.Config
 	config      *config.Resource
@@ -34,11 +34,11 @@ type AwsArnParse struct {
 	ResourceType string
 }
 
-func (r *Aws) GetName() string {
+func (r *Resource) GetName() string {
 	return "aws"
 }
 
-func (r *Aws) Init(a *shadow.Application) error {
+func (r *Resource) Init(a *shadow.Application) error {
 	r.application = a
 	r.services = map[string]interface{}{}
 
@@ -52,7 +52,7 @@ func (r *Aws) Init(a *shadow.Application) error {
 	return nil
 }
 
-func (r *Aws) Run() error {
+func (r *Resource) Run() error {
 	resourceLogger, err := r.application.GetResource("logger")
 	if err != nil {
 		return err
@@ -81,7 +81,7 @@ func (r *Aws) Run() error {
 	return nil
 }
 
-func (r *Aws) GetSNS() *sns.SNS {
+func (r *Resource) GetSNS() *sns.SNS {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
@@ -92,7 +92,7 @@ func (r *Aws) GetSNS() *sns.SNS {
 	return r.services["sns"].(*sns.SNS)
 }
 
-func (r *Aws) ParseArn(arn string) *AwsArnParse {
+func (r *Resource) ParseArn(arn string) *AwsArnParse {
 	// http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html#genref-arns
 
 	parts := strings.Split(arn, ":")
@@ -117,7 +117,7 @@ func (r *Aws) ParseArn(arn string) *AwsArnParse {
 	return &result
 }
 
-func (r *Aws) GetServices() map[string]interface{} {
+func (r *Resource) GetServices() map[string]interface{} {
 	r.mutex.RLock()
 	r.mutex.RUnlock()
 

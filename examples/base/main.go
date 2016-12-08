@@ -25,7 +25,7 @@ func main() {
 			new(template.Resource),
 			new(alerts.Resource),
 			new(workers.Resource),
-			new(aws.Aws),
+			new(aws.Resource),
 		},
 		[]shadow.Service{
 			new(frontend.FrontendService),

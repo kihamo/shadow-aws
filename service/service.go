@@ -78,7 +78,7 @@ type AwsService struct {
 	workers     *workers.Resource
 	logger      xlog.Logger
 
-	aws   *aws.Aws
+	aws   *aws.Resource
 	mutex sync.RWMutex
 
 	applications  map[string]AwsSnsApplication
@@ -115,7 +115,7 @@ func (s *AwsService) Init(a *shadow.Application) error {
 	if err != nil {
 		return err
 	}
-	s.aws = resourceAws.(*aws.Aws)
+	s.aws = resourceAws.(*aws.Resource)
 
 	if a.HasResource("metrics") {
 		resourceMetrics, _ := a.GetResource("metrics")
