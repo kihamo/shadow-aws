@@ -53,11 +53,11 @@ func (r *Resource) Init(a *shadow.Application) error {
 }
 
 func (r *Resource) Run() error {
-	resourceLogger, err := r.application.GetResource("logger")
-	if err != nil {
-		return err
+	if resourceLogger, err := r.application.GetResource("logger"); err == nil {
+		r.logger = resourceLogger.(*logger.Resource).Get(r.GetName())
+	} else {
+		r.logger = xlog.NopLogger
 	}
-	logger := resourceLogger.(*logger.Resource).Get(r.GetName())
 
 	r.awsConfig = aws.NewConfig().
 		WithCredentials(credentials.NewStaticCredentials(r.config.GetString("aws.key"), r.config.GetString("aws.secret"), "")).
@@ -76,7 +76,8 @@ func (r *Resource) Run() error {
 		fields["key"] = credentials.AccessKeyID
 		fields["secret"] = credentials.SecretAccessKey
 	}
-	logger.Info("Connect AWS", fields)
+
+	r.logger.Info("Connect AWS", fields)
 
 	return nil
 }
