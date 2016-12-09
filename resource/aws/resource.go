@@ -63,7 +63,8 @@ func (r *Resource) Run() error {
 		WithRegion(r.config.GetString("aws.region"))
 
 	if r.config.GetBool("debug") {
-		r.awsConfig.WithLogLevel(aws.LogDebug)
+		r.awsConfig.WithLogLevel(aws.LogDebug).
+			WithLogger(r.logger)
 	}
 
 	fields := map[string]interface{}{
