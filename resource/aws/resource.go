@@ -11,14 +11,13 @@ import (
 	"github.com/kihamo/shadow"
 	"github.com/kihamo/shadow/resource/config"
 	"github.com/kihamo/shadow/resource/logger"
-	"github.com/rs/xlog"
 )
 
 type Resource struct {
 	application *shadow.Application
 	awsConfig   *aws.Config
 	config      *config.Resource
-	logger      xlog.Logger
+	logger      logger.Logger
 
 	mutex    sync.RWMutex
 	services map[string]interface{}
@@ -56,7 +55,7 @@ func (r *Resource) Run() error {
 	if resourceLogger, err := r.application.GetResource("logger"); err == nil {
 		r.logger = resourceLogger.(*logger.Resource).Get(r.GetName())
 	} else {
-		r.logger = xlog.NopLogger
+		r.logger = logger.NopLogger
 	}
 
 	r.awsConfig = aws.NewConfig().
@@ -67,7 +66,7 @@ func (r *Resource) Run() error {
 		r.awsConfig.WithLogLevel(aws.LogDebug)
 	}
 
-	fields := xlog.F{
+	fields := map[string]interface{}{
 		"region": *r.awsConfig.Region,
 	}
 

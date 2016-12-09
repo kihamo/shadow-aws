@@ -12,7 +12,6 @@ import (
 	"github.com/kihamo/shadow/resource/config"
 	"github.com/kihamo/shadow/resource/logger"
 	"github.com/kihamo/shadow/resource/workers"
-	"github.com/rs/xlog"
 )
 
 type AwsSnsApplication struct {
@@ -73,7 +72,7 @@ type AwsService struct {
 	application *shadow.Application
 	config      *config.Resource
 	workers     *workers.Resource
-	logger      xlog.Logger
+	logger      logger.Logger
 
 	aws   *aws.Resource
 	mutex sync.RWMutex
@@ -109,7 +108,7 @@ func (s *AwsService) Run() error {
 	if resourceLogger, err := s.application.GetResource("logger"); err == nil {
 		s.logger = resourceLogger.(*logger.Resource).Get(s.GetName())
 	} else {
-		s.logger = xlog.NopLogger
+		s.logger = logger.NopLogger
 	}
 
 	s.applications = map[string]AwsSnsApplication{}
@@ -275,13 +274,13 @@ func (s *AwsService) getEndpointsJob(attempts int64, _ chan bool, args ...interf
 		}
 
 		if err != nil {
-			s.logger.Errorf("Update apn %s", app.Arn, xlog.F{
+			s.logger.Errorf("Update apn %s", app.Arn, map[string]interface{}{
 				"application.ednpoints":         app.EndpointsCount,
 				"application.ednpoints-enabled": app.EndpointsEnabledCount,
 				"error": err.Error(),
 			})
 		} else {
-			s.logger.Infof("Update apn %s", app.Arn, xlog.F{
+			s.logger.Debugf("Update apn %s", app.Arn, map[string]interface{}{
 				"application.ednpoints":         app.EndpointsCount,
 				"application.ednpoints-enabled": app.EndpointsEnabledCount,
 			})
