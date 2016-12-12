@@ -4,22 +4,28 @@ import (
 	"github.com/kihamo/shadow/resource/config"
 )
 
+const (
+	ConfigAwsKey    = "aws.key"
+	ConfigAwsSecret = "aws.secret"
+	ConfigAwsRegion = "aws.region"
+)
+
 func (r *Resource) GetConfigVariables() []config.Variable {
 	return []config.Variable{
 		{
-			Key:   "aws.key",
-			Value: "",
+			Key:   ConfigAwsKey,
 			Usage: "AWS access key ID",
+			Type:  config.ValueTypeString,
 		},
 		{
-			Key:   "aws.secret",
-			Value: "",
+			Key:   ConfigAwsSecret,
 			Usage: "AWS secret access key",
+			Type:  config.ValueTypeString,
 		},
 		{
-			Key:   "aws.region",
-			Value: "",
+			Key:   ConfigAwsRegion,
 			Usage: "AWS region",
+			Type:  config.ValueTypeString,
 		},
 	}
 }

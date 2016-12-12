@@ -59,10 +59,10 @@ func (r *Resource) Run() error {
 	}
 
 	r.awsConfig = aws.NewConfig().
-		WithCredentials(credentials.NewStaticCredentials(r.config.GetString("aws.key"), r.config.GetString("aws.secret"), "")).
+		WithCredentials(credentials.NewStaticCredentials(r.config.GetString(ConfigAwsKey), r.config.GetString(ConfigAwsSecret), "")).
 		WithRegion(r.config.GetString("aws.region"))
 
-	if r.config.GetBool("debug") {
+	if r.config.GetBool(config.ConfigDebug) {
 		r.awsConfig.WithLogLevel(aws.LogDebug).
 			WithLogger(r.logger)
 	}
