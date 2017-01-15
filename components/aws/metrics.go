@@ -1,8 +1,8 @@
-package service
+package aws
 
 import (
 	kit "github.com/go-kit/kit/metrics"
-	"github.com/kihamo/shadow/resource/metrics"
+	"github.com/kihamo/shadow/components/metrics"
 )
 
 const (
@@ -21,7 +21,7 @@ var (
 	metricEndpointsEnabled   kit.Gauge
 )
 
-func (s *AwsService) MetricsRegister(m *metrics.Resource) {
+func (c *Component) MetricsRegister(m *metrics.Component) {
 	metricApplicationsTotal = m.NewGauge(MetricApplicationsTotal)
 	metricSubscriptionsTotal = m.NewGauge(MetricSubscriptionsTotal)
 	metricTopicsTotal = m.NewGauge(MetricTopicsTotal)

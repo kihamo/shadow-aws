@@ -4,33 +4,23 @@ import (
 	"log"
 
 	"github.com/kihamo/shadow"
-	"github.com/kihamo/shadow-aws/resource/aws"
-	"github.com/kihamo/shadow-aws/service"
-	"github.com/kihamo/shadow/resource/alerts"
-	"github.com/kihamo/shadow/resource/config"
-	"github.com/kihamo/shadow/resource/logger"
-	"github.com/kihamo/shadow/resource/metrics"
-	"github.com/kihamo/shadow/resource/template"
-	"github.com/kihamo/shadow/resource/workers"
-	"github.com/kihamo/shadow/service/frontend"
-	"github.com/kihamo/shadow/service/system"
+	"github.com/kihamo/shadow-aws/components/aws"
+	"github.com/kihamo/shadow/components/alerts"
+	"github.com/kihamo/shadow/components/config"
+	"github.com/kihamo/shadow/components/dashboard"
+	"github.com/kihamo/shadow/components/logger"
+	"github.com/kihamo/shadow/components/metrics"
 )
 
 func main() {
-	application, err := shadow.NewApplication(
-		[]shadow.Resource{
-			new(config.Resource),
-			new(logger.Resource),
-			new(metrics.Resource),
-			new(template.Resource),
-			new(alerts.Resource),
-			new(workers.Resource),
-			new(aws.Resource),
-		},
-		[]shadow.Service{
-			new(frontend.FrontendService),
-			new(system.SystemService),
-			new(service.AwsService),
+	application, err := shadow.NewApp(
+		[]shadow.Component{
+			new(config.Component),
+			new(logger.Component),
+			new(metrics.Component),
+			new(alerts.Component),
+			new(dashboard.Component),
+			new(aws.Component),
 		},
 		"Aws",
 		"1.0",

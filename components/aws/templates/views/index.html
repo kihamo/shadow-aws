@@ -1,4 +1,24 @@
-{{ include "frontend" "layout/header.tpl.html" }}
+{{ define "head" }}
+<style type="text/css">
+    .section-title {
+        margin-top: 1em;
+        height: 2em;
+    }
+
+    .section-toolbar {
+        position: relative;
+        text-align: right;
+        margin: 0 7px 0 0;
+    }
+</style>
+{{ end }}
+
+{{ define "content" }}
+<div class="row">
+    <div class="col-lg-12">
+        <h1 class="page-header">Amazon Web Service</h1>
+    </div>
+</div>
 
 <div role="tabpanel">
     <ul class="nav nav-tabs" role="tablist">
@@ -16,7 +36,7 @@
                     <th>Active services</th>
                     </thead>
                     <tbody>
-                    {{ range $name, $service := .Services }}
+                    {{ range $name, $service := .services }}
                     <tr>
                         <td>{{ $name }}</td>
                     </tr>
@@ -26,6 +46,21 @@
             </div>
         </div>
         <div role="tabpanel" class="tab-pane" id="applications">
+            <div class="section-title">
+                <div class="section-toolbar">
+                    <form method="POST">
+                        <input type="hidden" name="updater" value="applications" />
+                        <button type="submit" onclick="submit();" class="btn btn-primary btn-xs"
+                                data-clipboard-target="widget-code-div"
+                                data-toggle="tooltip"
+                                data-trigger="click"
+                                data-placement="top"
+                                title="Обновить">
+                            Обновить
+                        </button>
+                    </form>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table class="table table-hover table-striped">
                     <thead>
@@ -37,18 +72,24 @@
                         <th>Last update</th>
                     </thead>
                     <tbody>
-                    {{ range $i, $application := .Applications }}
+                    {{ range $i, $application := .applications }}
                     <tr {{if not $application.Enabled}}class="danger"{{end}}>
                         <td>{{ add $i 1 }}</td>
                         <td class="text-center">
-                            {{if $application.IsIAM}}
+                            {{ if $application.IsIAM }}
                             <span class="glyphicon glyphicon-ok" style="color: #5cb85c"></span>
-                            {{else}}
+                            {{ else }}
                             <span class="glyphicon glyphicon-remove" style="color: #d9534f"></span>
-                            {{end}}
+                            {{ end }}
                         </td>
                         <td>{{ $application.Arn }}</td>
-                        <td>{{ $application.CertificateExpirationDate }}</td>
+                        <td>
+                            {{ if $application.CertificateExpirationDate }}
+                                {{ $application.CertificateExpirationDate }}
+                            {{ else }}
+                                &mdash;
+                            {{ end }}
+                        </td>
                         <td>
                             <div class="progress">
                                 <div class="progress-bar progress-bar-success" style="min-width:2em;width:{{ $application.GetEnabledPercent }}%">
@@ -68,6 +109,21 @@
         </div>
 
         <div role="tabpanel" class="tab-pane" id="topics">
+            <div class="section-title">
+                <div class="section-toolbar">
+                    <form method="POST">
+                        <input type="hidden" name="updater" value="topics" />
+                        <button type="submit" onclick="submit();" class="btn btn-primary btn-xs"
+                                data-clipboard-target="widget-code-div"
+                                data-toggle="tooltip"
+                                data-trigger="click"
+                                data-placement="top"
+                                title="Обновить">
+                            Обновить
+                        </button>
+                    </form>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table class="table table-hover table-striped">
                     <thead>
@@ -75,7 +131,7 @@
                         <th>Topic ARN</th>
                     </thead>
                     <tbody>
-                    {{ range $i, $topic := .Topics }}
+                    {{ range $i, $topic := .topics }}
                     <tr>
                         <td>{{ add $i 1 }}</td>
                         <td>{{ $topic.TopicArn }}</td>
@@ -87,6 +143,21 @@
         </div>
 
         <div role="tabpanel" class="tab-pane" id="subscriptions">
+            <div class="section-title">
+                <div class="section-toolbar">
+                    <form method="POST">
+                        <input type="hidden" name="updater" value="subscriptions" />
+                        <button type="submit" onclick="submit();" class="btn btn-primary btn-xs"
+                                data-clipboard-target="widget-code-div"
+                                data-toggle="tooltip"
+                                data-trigger="click"
+                                data-placement="top"
+                                title="Обновить">
+                            Обновить
+                        </button>
+                    </form>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table class="table table-hover table-striped">
                     <thead>
@@ -95,7 +166,7 @@
                         <th>Endpoint</th>
                     </thead>
                     <tbody>
-                    {{ range $i, $subscription := .Subscriptions }}
+                    {{ range $i, $subscription := .subscriptions }}
                     <tr>
                         <td>{{ add $i 1 }}</td>
                         <td>{{ $subscription.SubscriptionArn }}</td>
@@ -110,7 +181,6 @@
 </div>
 
 <p class="text-right">
-    SDK version: {{ .SDKVersion }}
+    SDK version: {{ .sdkVersion }}
 </p>
-
-{{ include "frontend" "layout/footer.tpl.html" }}
+{{ end }}
