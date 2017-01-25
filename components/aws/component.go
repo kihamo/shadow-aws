@@ -41,7 +41,7 @@ func (c *Component) GetName() string {
 }
 
 func (c *Component) GetVersion() string {
-	return "1.0.0"
+	return "1.0.1"
 }
 
 func (c *Component) Init(a shadow.Application) error {
@@ -76,7 +76,7 @@ func (c *Component) Run() error {
 
 	c.awsConfig = sdk.NewConfig().
 		WithCredentials(credentials.NewStaticCredentials(c.config.GetString(ConfigAwsKey), c.config.GetString(ConfigAwsSecret), "")).
-		WithRegion(c.config.GetString("aws.region"))
+		WithRegion(c.config.GetString(ConfigAwsRegion))
 
 	if c.config.GetBool(config.ConfigDebug) {
 		c.awsConfig.WithLogLevel(sdk.LogDebug).
