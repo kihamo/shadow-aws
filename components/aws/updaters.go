@@ -7,6 +7,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/sns"
 )
 
+const (
+	endpointsBatchSize = 50
+)
+
 func (c *Component) loadUpdaters() {
 	go func() {
 		ticker := time.NewTicker(c.config.GetDuration(ConfigAwsUpdaterApplicationsDuration))
@@ -122,28 +126,24 @@ func (c *Component) updaterApplications() {
 }
 
 func (c *Component) updaterEndpoints() {
-	for _, application := range c.GetApplications() {
-		c.mutex.RLock()
-		_, ok := c.applications[application.Arn]
-		c.mutex.RUnlock()
-		if !ok {
-			continue
-		}
+	applications := c.GetApplications()
+	batchStartIndex := 0
 
+	for i := range applications {
 		params := &sns.ListEndpointsByPlatformApplicationInput{
-			PlatformApplicationArn: sdk.String(application.Arn),
+			PlatformApplicationArn: sdk.String(applications[i].Arn),
 		}
 
-		application.EndpointsCount = 0
-		application.EndpointsEnabledCount = 0
-		application.LastUpdate = time.Now().UTC()
+		applications[i].EndpointsCount = 0
+		applications[i].EndpointsEnabledCount = 0
+		applications[i].LastUpdate = time.Now().UTC()
 
 		err := c.GetSNS().ListEndpointsByPlatformApplicationPages(params, func(p *sns.ListEndpointsByPlatformApplicationOutput, lastPage bool) bool {
-			application.EndpointsCount += len(p.Endpoints)
+			applications[i].EndpointsCount += len(p.Endpoints)
 
 			for _, point := range p.Endpoints {
 				if enabled, ok := point.Attributes["Enabled"]; ok && sdk.StringValue(enabled) == "true" {
-					application.EndpointsEnabledCount++
+					applications[i].EndpointsEnabledCount++
 				}
 			}
 
@@ -152,32 +152,53 @@ func (c *Component) updaterEndpoints() {
 
 		if err == nil {
 			if metricEndpointsTotal != nil {
-				metricEndpointsTotal.With("arn", application.Arn).Set(float64(application.EndpointsCount))
+				metricEndpointsTotal.With("arn", applications[i].Arn).Set(float64(applications[i].EndpointsCount))
 			}
 
 			if metricEndpointsEnabled != nil {
-				metricEndpointsEnabled.With("arn", application.Arn).Set(float64(application.EndpointsEnabledCount))
+				metricEndpointsEnabled.With("arn", applications[i].Arn).Set(float64(applications[i].EndpointsEnabledCount))
 			}
 		}
 
 		if err != nil {
-			c.logger.Errorf("Update apn %s is failed", application.Arn, map[string]interface{}{
-				"application.ednpoints":         application.EndpointsCount,
-				"application.ednpoints-enabled": application.EndpointsEnabledCount,
+			c.logger.Errorf("Update apn %s is failed", applications[i].Arn, map[string]interface{}{
+				"application.ednpoints":         applications[i].EndpointsCount,
+				"application.ednpoints-enabled": applications[i].EndpointsEnabledCount,
 				"error": err.Error(),
 			})
 		} else {
-			c.logger.Debugf("Update apn %s is success", application.Arn, map[string]interface{}{
-				"application.ednpoints":         application.EndpointsCount,
-				"application.ednpoints-enabled": application.EndpointsEnabledCount,
+			c.logger.Debugf("Update apn %s is success", applications[i].Arn, map[string]interface{}{
+				"application.ednpoints":         applications[i].EndpointsCount,
+				"application.ednpoints-enabled": applications[i].EndpointsEnabledCount,
 			})
 		}
 
-		c.mutex.Lock()
-		if _, ok := c.applications[application.Arn]; ok {
-			c.applications[application.Arn] = application
+		// flush data
+		batchEndIndex := i + 1
+
+		if batchEndIndex%endpointsBatchSize == 0 || batchEndIndex == len(applications) {
+			c.mutex.Lock()
+			for _, current := range applications[batchStartIndex:batchEndIndex] {
+				last, ok := c.applications[current.Arn]
+				if !ok {
+					continue
+				}
+
+				last.EndpointsCount = current.EndpointsCount
+				last.EndpointsEnabledCount = current.EndpointsEnabledCount
+				last.LastUpdate = current.LastUpdate
+
+				c.applications[current.Arn] = last
+			}
+			c.mutex.Unlock()
+
+			c.logger.Debugf("Flush apns endpoints", map[string]interface{}{
+				"batch.start": batchStartIndex,
+				"batch.end":   batchEndIndex,
+			})
+
+			batchStartIndex = batchEndIndex
 		}
-		c.mutex.Unlock()
 	}
 }
 
