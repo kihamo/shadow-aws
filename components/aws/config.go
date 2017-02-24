@@ -71,14 +71,14 @@ func (c *Component) GetConfigWatchers() map[string][]config.Watcher {
 	}
 }
 
-func (c *Component) watchAwsUpdaterApplicationsDuration(newValue interface{}, _ interface{}) {
+func (c *Component) watchAwsUpdaterApplicationsDuration(_ string, newValue interface{}, _ interface{}) {
 	c.applicationsTicker <- newValue.(time.Duration)
 }
 
-func (c *Component) watchAwsUpdaterSubscriptionsDuration(newValue interface{}, _ interface{}) {
+func (c *Component) watchAwsUpdaterSubscriptionsDuration(_ string, newValue interface{}, _ interface{}) {
 	c.subscriptionsTicker <- newValue.(time.Duration)
 }
 
-func (c *Component) watchAwsUpdaterTopicsDuration(newValue interface{}, _ interface{}) {
+func (c *Component) watchAwsUpdaterTopicsDuration(_ string, newValue interface{}, _ interface{}) {
 	c.topicsTicker <- newValue.(time.Duration)
 }
