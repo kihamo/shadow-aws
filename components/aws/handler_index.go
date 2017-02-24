@@ -3,7 +3,7 @@ package aws
 import (
 	"net/http"
 
-	"github.com/aws/aws-sdk-go/aws"
+	sdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/kihamo/shadow/components/dashboard"
 )
 
@@ -39,10 +39,6 @@ func (h *IndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		"applications":  h.component.GetApplications(),
 		"subscriptions": h.component.GetSubscriptions(),
 		"topics":        h.component.GetTopics(),
-		"sdkVersion":    aws.SDKVersion,
+		"sdkVersion":    sdk.SDKVersion,
 	})
-
-	///	h.SetPageTitle("Aws")
-	//	h.SetPageHeader("Amazon Web Service")
-
 }

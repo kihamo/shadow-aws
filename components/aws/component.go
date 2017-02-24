@@ -74,20 +74,17 @@ func (c *Component) Init(a shadow.Application) error {
 func (c *Component) Run() error {
 	c.logger = logger.NewOrNop(c.GetName(), c.application)
 
-	c.awsConfig = sdk.NewConfig().
+	awsConfig := sdk.NewConfig().
 		WithCredentials(credentials.NewStaticCredentials(c.config.GetString(ConfigAwsKey), c.config.GetString(ConfigAwsSecret), "")).
-		WithRegion(c.config.GetString(ConfigAwsRegion))
-
-	if c.config.GetBool(config.ConfigDebug) {
-		c.awsConfig.WithLogLevel(sdk.LogDebug).
-			WithLogger(c.logger)
-	}
+		WithRegion(c.config.GetString(ConfigAwsRegion)).
+		WithLogLevel(sdk.LogLevelType(c.config.GetUint(ConfigAwsLogLevel))).
+		WithLogger(c.logger)
 
 	fields := map[string]interface{}{
-		"region": *c.awsConfig.Region,
+		"region": *awsConfig.Region,
 	}
 
-	credentials, err := c.awsConfig.Credentials.Get()
+	credentials, err := awsConfig.Credentials.Get()
 	if err == nil {
 		fields["key"] = credentials.AccessKeyID
 		fields["secret"] = credentials.SecretAccessKey
@@ -95,9 +92,25 @@ func (c *Component) Run() error {
 
 	c.logger.Info("Connect AWS", fields)
 
+	c.initAwsConfig(awsConfig)
 	c.loadUpdaters()
 
 	return nil
+}
+
+func (c *Component) initAwsConfig(config *sdk.Config) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	c.awsConfig = config
+	c.services = map[string]interface{}{}
+}
+
+func (c *Component) getAwsConfig() *sdk.Config {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+
+	return c.awsConfig
 }
 
 func (c *Component) GetApplications() []AwsSnsApplication {
