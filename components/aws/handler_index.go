@@ -34,7 +34,7 @@ func (h *IndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.Render(r.Context(), "aws", "index", map[string]interface{}{
+	h.Render(r.Context(), ComponentName, "index", map[string]interface{}{
 		"services":      h.component.GetServices(),
 		"applications":  h.component.GetApplications(),
 		"subscriptions": h.component.GetSubscriptions(),

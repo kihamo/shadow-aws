@@ -13,6 +13,10 @@ import (
 	"github.com/kihamo/shadow/components/logger"
 )
 
+const (
+	ComponentName = "aws"
+)
+
 type Component struct {
 	application shadow.Application
 
@@ -37,17 +41,29 @@ type Component struct {
 }
 
 func (c *Component) GetName() string {
-	return "aws"
+	return ComponentName
 }
 
 func (c *Component) GetVersion() string {
 	return "1.0.1"
 }
 
+func (c *Component) GetDependencies() []shadow.Dependency {
+	return []shadow.Dependency{
+		{
+			Name:     config.ComponentName,
+			Required: true,
+		},
+		{
+			Name: logger.ComponentName,
+		},
+	}
+}
+
 func (c *Component) Init(a shadow.Application) error {
 	c.application = a
 
-	cmpConfig, err := a.GetComponent("config")
+	cmpConfig, err := a.GetComponent(config.ComponentName)
 	if err != nil {
 		return err
 	}
