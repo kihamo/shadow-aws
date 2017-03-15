@@ -7,6 +7,7 @@ import (
 	sdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/kihamo/shadow"
 	"github.com/kihamo/shadow/components/config"
@@ -15,6 +16,9 @@ import (
 
 const (
 	ComponentName = "aws"
+
+	ServiceSNS = "sns"
+	ServiceSES = "ses"
 )
 
 type Component struct {
@@ -168,11 +172,22 @@ func (c *Component) GetSNS() *sns.SNS {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	if _, ok := c.services["sns"]; !ok {
-		c.services["sns"] = sns.New(session.New(c.awsConfig))
+	if _, ok := c.services[ServiceSNS]; !ok {
+		c.services[ServiceSNS] = sns.New(session.New(c.awsConfig))
 	}
 
-	return c.services["sns"].(*sns.SNS)
+	return c.services[ServiceSNS].(*sns.SNS)
+}
+
+func (c *Component) GetSES() *ses.SES {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	if _, ok := c.services[ServiceSES]; !ok {
+		c.services[ServiceSES] = ses.New(session.New(c.awsConfig))
+	}
+
+	return c.services[ServiceSES].(*ses.SES)
 }
 
 func (c *Component) GetServices() map[string]interface{} {

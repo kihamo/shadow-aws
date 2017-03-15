@@ -19,8 +19,17 @@ func (c *Component) GetTemplates() *assetfs.AssetFS {
 func (c *Component) GetDashboardMenu() *dashboard.Menu {
 	return &dashboard.Menu{
 		Name: "Aws",
-		Url:  "/",
 		Icon: "cloud",
+		SubMenu: []*dashboard.Menu{
+			{
+				Name: "SNS",
+				Url:  "/sns",
+			},
+			{
+				Name: "SES",
+				Url:  "/ses",
+			},
+		},
 	}
 }
 
@@ -28,8 +37,15 @@ func (c *Component) GetDashboardRoutes() []*dashboard.Route {
 	return []*dashboard.Route{
 		{
 			Methods: []string{http.MethodGet, http.MethodPost},
-			Path:    "/",
-			Handler: &IndexHandler{
+			Path:    "/sns",
+			Handler: &SNSHandler{
+				component: c,
+			},
+		},
+		{
+			Methods: []string{http.MethodGet, http.MethodPost},
+			Path:    "/ses",
+			Handler: &SESHandler{
 				component: c,
 			},
 		},

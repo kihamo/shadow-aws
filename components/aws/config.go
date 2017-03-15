@@ -18,6 +18,7 @@ const (
 	ConfigAwsUpdaterApplicationsDuration  = "aws.updater_applications_duration"
 	ConfigAwsUpdaterSubscriptionsDuration = "aws.updater_subscriptions_duration"
 	ConfigAwsUpdaterTopicsDuration        = "aws.updater_topics_duration"
+	ConfigAwsSesFromEmail                 = "aws.ses.from_email"
 )
 
 func (c *Component) GetConfigVariables() []config.Variable {
@@ -78,6 +79,12 @@ func (c *Component) GetConfigVariables() []config.Variable {
 			Default:  "10m",
 			Usage:    "Duration for AWS topics updater",
 			Type:     config.ValueTypeDuration,
+			Editable: true,
+		},
+		{
+			Key:      ConfigAwsSesFromEmail,
+			Usage:    "Email for from field in letters",
+			Type:     config.ValueTypeString,
 			Editable: true,
 		},
 	}

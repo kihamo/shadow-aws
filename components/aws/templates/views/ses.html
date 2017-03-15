@@ -1,0 +1,210 @@
+{{ define "js" }}
+    <script type="application/javascript">
+        $(function() {
+            Morris.Area({
+                element: 'stats-deliveries',
+                data: [
+                    {{ range $index, $stat := .stats }}
+                        {{ if $index }},{{ end }} {
+                            'time': '{{ $stat.Timestamp.Format "2006-01-02T15:04:05Z" }}',
+                            'emails': {{ $stat.DeliveryAttempts }}
+                        }
+                    {{ end }}
+                ],
+                xkey: 'time',
+                ykeys: ['emails'],
+                labels: ['Emails'],
+                pointSize: 2,
+                hideHover: 'auto',
+                resize: true,
+            });
+
+            Morris.Area({
+                element: 'stats-bounces',
+                data: [
+                    {{ range $index, $stat := .stats }}
+                        {{ if $index }},{{ end }} {
+                            'time': '{{ $stat.Timestamp.Format "2006-01-02T15:04:05Z" }}',
+                            'emails': {{ $stat.Bounces }}
+                        }
+                    {{ end }}
+                ],
+                xkey: 'time',
+                ykeys: ['emails'],
+                labels: ['Emails'],
+                pointSize: 2,
+                hideHover: 'auto',
+                resize: true
+            });
+
+            Morris.Area({
+                element: 'stats-complaints',
+                data: [
+                    {{ range $index, $stat := .stats }}
+                        {{ if $index }},{{ end }} {
+                            'time': '{{ $stat.Timestamp.Format "2006-01-02T15:04:05Z" }}',
+                            'emails': {{ $stat.Complaints }}
+                        }
+                    {{ end }}
+                ],
+                xkey: 'time',
+                ykeys: ['emails'],
+                labels: ['Emails'],
+                pointSize: 2,
+                hideHover: 'auto',
+                resize: true
+            });
+
+            Morris.Area({
+                element: 'stats-rejects',
+                data: [
+                    {{ range $index, $stat := .stats }}
+                        {{ if $index }},{{ end }} {
+                            'time': '{{ $stat.Timestamp.Format "2006-01-02T15:04:05Z" }}',
+                            'emails': {{ $stat.Rejects }}
+                        }
+                    {{ end }}
+                ],
+                xkey: 'time',
+                ykeys: ['emails'],
+                labels: ['Emails'],
+                pointSize: 2,
+                hideHover: 'auto',
+                resize: true
+            });
+        });
+    </script>
+{{ end }}
+
+{{ define "content" }}
+<div class="row">
+    <div class="col-lg-12">
+        <h1 class="page-header">Amazon Simple Email Service</h1>
+    </div>
+</div>
+
+{{ if .errors }}
+<div class="alert alert-danger alert-dismissable">
+    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+    {{ range $index, $error := .errors }}
+        {{ if $index }},{{ end }}
+        {{ $error }}
+    {{end}}
+</div>
+{{ end }}
+
+{{ if .message }}
+<div class="alert alert-info alert-dismissable">
+    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+    {{ .message }}
+</div>
+{{ end }}
+
+{{ if gt .remaining 0.0 }}
+<div class="panel panel-success">
+    <div class="panel-heading">Send email</div>
+    <div class="panel-body">
+        <form class="form-horizontal" role="form" method="post" id="send-mail" action="/aws/ses">
+            <div class="form-group">
+                <label for="to" class="col-sm-2 control-label">From</label>
+                <div class="col-sm-10">
+                    <input type="email" class="form-control" id="from" name="from" placeholder="example1@domain.com" value="{{ .sendFrom }}">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="to" class="col-sm-2 control-label">To</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" id="to" name="to" placeholder="example1@domain.com, example2@domain.com" value="{{ .sendTo }}">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="subject" class="col-sm-2 control-label">Subject</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" id="subject" name="subject" value="{{ .sendSubject }}">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="type" class="col-sm-2 control-label">Content type</label>
+                <div class="col-sm-10">
+                    <select class="form-control" rows="4" name="type" id="type">
+                        <option value="plain"{{ if eq .sendType "plain" }} selected{{ end }}>Plain text</option>
+                        <option value="html"{{ if eq .sendType "html" }} selected{{ end }}>HTML</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="message" class="col-sm-2 control-label">Message</label>
+                <div class="col-sm-10">
+                    <textarea class="form-control" rows="4" name="message" id="message">{{ .sendMessage }}</textarea>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-10 col-sm-offset-2">
+                    <input id="submit" name="submit" type="submit" value="Send" class="btn btn-primary">
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{{ end }}
+
+<div class="panel panel-info">
+    <div class="panel-heading">Statistics</div>
+    <div class="panel-body">
+        <div class="row" style="margin:0">
+            <div class="col-md-6 text-left text-warning small" style="padding:0"><strong>{{ .sent }} Sent</strong></div>
+            <div class="col-md-6 text-right text-muted small" style="padding:0"><strong>{{ .remaining }} Remaining</strong></div>
+        </div>
+        <div class="row" style="margin:0">
+            <div class="progress" style="margin-bottom:0;">
+                <div class="progress-bar progress-bar-info progress-bar-striped active" role="progressbar" aria-valuenow="{{ .sentPercent }}" aria-valuemin="0" aria-valuemax="100" style="width:{{ .sentPercent }}%;min-width:2em">
+                    {{ printf "%.0f" .sentPercent }}%
+                </div>
+            </div>
+        </div>
+        <div class="row" style="margin:20px 0 -20px 0">
+            <div class="list-group">
+                <span class="list-group-item">
+                    Sending quota:
+                    <span class="pull-right text-muted small"><em>send <strong class="text-danger">{{ .max24HourSend }}</strong> emails per 24 hour period</em></span>
+                </span>
+                <span class="list-group-item">
+                    Quota used:
+                    <span class="pull-right text-muted small"><em><strong>{{ printf "%.0f" .sentPercent }}%</strong></em></span>
+                </span>
+                <span class="list-group-item">
+                    Max send rate:
+                    <span class="pull-right text-muted small"><em><strong class="text-danger">{{ .maxSendRate }}</strong> emails/second</em></span>
+                </span>
+            </div>
+        </div>
+        <div class="row" style="margin:20px -15px -20px -15px">
+            <div class="col-lg-6">
+                <div class="well well-sm">
+                    <h4 class="text-center">Deliveries</h4>
+                    <div id="stats-deliveries"></div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="well well-sm">
+                    <h4 class="text-center">Bounces</h4>
+                    <div id="stats-bounces"></div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="well well-sm">
+                    <h4 class="text-center">Complaints</h4>
+                    <div id="stats-complaints"></div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="well well-sm">
+                    <h4 class="text-center">Rejects</h4>
+                    <div id="stats-rejects"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ end }}

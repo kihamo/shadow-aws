@@ -7,13 +7,13 @@ import (
 	"github.com/kihamo/shadow/components/dashboard"
 )
 
-type IndexHandler struct {
+type SNSHandler struct {
 	dashboard.Handler
 
 	component *Component
 }
 
-func (h *IndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *SNSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h.IsPost(r) {
 		r.ParseForm()
 		updater := r.PostForm.Get("updater")
@@ -34,7 +34,7 @@ func (h *IndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.Render(r.Context(), ComponentName, "index", map[string]interface{}{
+	h.Render(r.Context(), ComponentName, "sns", map[string]interface{}{
 		"services":      h.component.GetServices(),
 		"applications":  h.component.GetApplications(),
 		"subscriptions": h.component.GetSubscriptions(),
