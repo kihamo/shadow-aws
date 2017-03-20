@@ -17,6 +17,9 @@
                 pointSize: 2,
                 hideHover: 'auto',
                 resize: true,
+                xLabelFormat: function(x) {
+                    return x.toString().substr(4,6) + ' ' + x.toTimeString().substr(0,5);
+                }
             });
 
             Morris.Area({
@@ -34,7 +37,10 @@
                 labels: ['Emails'],
                 pointSize: 2,
                 hideHover: 'auto',
-                resize: true
+                resize: true,
+                xLabelFormat: function(x) {
+                    return x.toString().substr(4,6) + ' ' + x.toTimeString().substr(0,5);
+                }
             });
 
             Morris.Area({
@@ -52,7 +58,10 @@
                 labels: ['Emails'],
                 pointSize: 2,
                 hideHover: 'auto',
-                resize: true
+                resize: true,
+                xLabelFormat: function(x) {
+                    return x.toString().substr(4,6) + ' ' + x.toTimeString().substr(0,5);
+                }
             });
 
             Morris.Area({
@@ -70,7 +79,10 @@
                 labels: ['Emails'],
                 pointSize: 2,
                 hideHover: 'auto',
-                resize: true
+                resize: true,
+                xLabelFormat: function(x) {
+                    return x.toString().substr(4,6) + ' ' + x.toTimeString().substr(0,5);
+                }
             });
         });
     </script>
