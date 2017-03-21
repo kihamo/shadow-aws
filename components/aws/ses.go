@@ -2,6 +2,7 @@ package aws
 
 import (
 	"errors"
+	"fmt"
 
 	sdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ses"
@@ -22,6 +23,10 @@ func (c *Component) SendEmail(to []string, subject string, text string, html str
 
 	if from == "" {
 		from = c.config.GetString(ConfigAwsSesFromEmail)
+		name := c.config.GetString(ConfigAwsSesFromName)
+		if name != "" {
+			from = fmt.Sprintf("\"%s\" <%s>", name, from)
+		}
 	}
 
 	input := &ses.SendEmailInput{

@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -15,6 +16,8 @@ type SESHandler struct {
 }
 
 func (h *SESHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	config := dashboard.ConfigFromContext(r.Context())
+
 	errors := []string{}
 	vars := map[string]interface{}{
 		"sent":          0,
@@ -26,11 +29,16 @@ func (h *SESHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		"errors":        nil,
 		"message":       nil,
 
-		"sendFrom":    dashboard.ConfigFromContext(r.Context()).GetString(ConfigAwsSesFromEmail),
+		"sendFrom":    config.GetString(ConfigAwsSesFromEmail),
 		"sendTo":      "",
 		"sendSubject": "",
 		"sendMessage": "",
 		"sendType":    "html",
+	}
+
+	name := config.GetString(ConfigAwsSesFromName)
+	if name != "" {
+		vars["sendFrom"] = fmt.Sprintf("\"%s\" <%s>", name, vars["sendFrom"])
 	}
 
 	if h.IsPost(r) {

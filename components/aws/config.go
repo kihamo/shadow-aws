@@ -10,15 +10,16 @@ import (
 )
 
 const (
-	ConfigAwsKey                          = "aws.key"
-	ConfigAwsSecret                       = "aws.secret"
-	ConfigAwsRegion                       = "aws.region"
-	ConfigAwsLogLevel                     = "aws.log_level"
-	ConfigAwsRunUpdatersOnStartup         = "aws.run_updaters_on_startup"
-	ConfigAwsUpdaterApplicationsDuration  = "aws.updater_applications_duration"
-	ConfigAwsUpdaterSubscriptionsDuration = "aws.updater_subscriptions_duration"
-	ConfigAwsUpdaterTopicsDuration        = "aws.updater_topics_duration"
-	ConfigAwsSesFromEmail                 = "aws.ses.from_email"
+	ConfigAwsKey                          = ComponentName + ".key"
+	ConfigAwsSecret                       = ComponentName + ".secret"
+	ConfigAwsRegion                       = ComponentName + ".region"
+	ConfigAwsLogLevel                     = ComponentName + ".log_level"
+	ConfigAwsRunUpdatersOnStartup         = ComponentName + ".run_updaters_on_startup"
+	ConfigAwsUpdaterApplicationsDuration  = ComponentName + ".updater_applications_duration"
+	ConfigAwsUpdaterSubscriptionsDuration = ComponentName + ".updater_subscriptions_duration"
+	ConfigAwsUpdaterTopicsDuration        = ComponentName + ".updater_topics_duration"
+	ConfigAwsSesFromEmail                 = ComponentName + ".ses.from_email"
+	ConfigAwsSesFromName                  = ComponentName + ".ses.from_name"
 )
 
 func (c *Component) GetConfigVariables() []config.Variable {
@@ -84,6 +85,12 @@ func (c *Component) GetConfigVariables() []config.Variable {
 		{
 			Key:      ConfigAwsSesFromEmail,
 			Usage:    "Email for from field in letters",
+			Type:     config.ValueTypeString,
+			Editable: true,
+		},
+		{
+			Key:      ConfigAwsSesFromName,
+			Usage:    "Name for from field in letters",
 			Type:     config.ValueTypeString,
 			Editable: true,
 		},
