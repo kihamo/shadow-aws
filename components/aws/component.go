@@ -49,7 +49,7 @@ func (c *Component) GetName() string {
 }
 
 func (c *Component) GetVersion() string {
-	return "1.0.1"
+	return ComponentVersion
 }
 
 func (c *Component) GetDependencies() []shadow.Dependency {
@@ -67,11 +67,7 @@ func (c *Component) GetDependencies() []shadow.Dependency {
 func (c *Component) Init(a shadow.Application) error {
 	c.application = a
 
-	cmpConfig, err := a.GetComponent(config.ComponentName)
-	if err != nil {
-		return err
-	}
-	c.config = cmpConfig.(*config.Component)
+	c.config = a.GetComponent(config.ComponentName).(*config.Component)
 
 	c.services = map[string]interface{}{}
 
