@@ -91,9 +91,9 @@ func (c *Component) Run() error {
 	c.logger = logger.NewOrNop(c.GetName(), c.application)
 
 	awsConfig := sdk.NewConfig().
-		WithCredentials(credentials.NewStaticCredentials(c.config.GetString(ConfigAwsKey), c.config.GetString(ConfigAwsSecret), "")).
-		WithRegion(c.config.GetString(ConfigAwsRegion)).
-		WithLogLevel(sdk.LogLevelType(c.config.GetUint(ConfigAwsLogLevel))).
+		WithCredentials(credentials.NewStaticCredentials(c.config.GetString(ConfigKey), c.config.GetString(ConfigSecret), "")).
+		WithRegion(c.config.GetString(ConfigRegion)).
+		WithLogLevel(sdk.LogLevelType(c.config.GetUint(ConfigLogLevel))).
 		WithLogger(c.logger)
 
 	fields := map[string]interface{}{

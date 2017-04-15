@@ -67,7 +67,7 @@ func (a AwsSnsApplication) GetDisabledPercent() int {
 
 func (c *Component) loadUpdaters() {
 	go func() {
-		ticker := time.NewTicker(c.config.GetDuration(ConfigAwsUpdaterApplicationsDuration))
+		ticker := time.NewTicker(c.config.GetDuration(ConfigUpdaterApplicationsDuration))
 
 		for {
 			select {
@@ -82,7 +82,7 @@ func (c *Component) loadUpdaters() {
 	}()
 
 	go func() {
-		ticker := time.NewTicker(c.config.GetDuration(ConfigAwsUpdaterSubscriptionsDuration))
+		ticker := time.NewTicker(c.config.GetDuration(ConfigUpdaterSubscriptionsDuration))
 
 		for {
 			select {
@@ -97,7 +97,7 @@ func (c *Component) loadUpdaters() {
 	}()
 
 	go func() {
-		ticker := time.NewTicker(c.config.GetDuration(ConfigAwsUpdaterTopicsDuration))
+		ticker := time.NewTicker(c.config.GetDuration(ConfigUpdaterTopicsDuration))
 
 		for {
 			select {
@@ -111,7 +111,7 @@ func (c *Component) loadUpdaters() {
 		}
 	}()
 
-	if c.config.GetBool(ConfigAwsRunUpdatersOnStartup) {
+	if c.config.GetBool(ConfigRunUpdatersOnStartup) {
 		c.applicationsRun <- true
 		c.subscriptionsRun <- true
 		c.topicsRun <- true

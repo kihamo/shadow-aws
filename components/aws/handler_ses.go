@@ -29,14 +29,14 @@ func (h *SESHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		"errors":        nil,
 		"message":       nil,
 
-		"sendFrom":    config.GetString(ConfigAwsSesFromEmail),
+		"sendFrom":    config.GetString(ConfigSesFromEmail),
 		"sendTo":      "",
 		"sendSubject": "",
 		"sendMessage": "",
 		"sendType":    "html",
 	}
 
-	name := config.GetString(ConfigAwsSesFromName)
+	name := config.GetString(ConfigSesFromName)
 	if name != "" {
 		vars["sendFrom"] = fmt.Sprintf("\"%s\" <%s>", name, vars["sendFrom"])
 	}

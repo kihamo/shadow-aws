@@ -1,30 +1,50 @@
 package aws
 
 import (
-	kit "github.com/go-kit/kit/metrics"
-	"github.com/kihamo/shadow/components/metrics"
+	"github.com/kihamo/snitch"
 )
 
 const (
-	MetricApplicationsTotal  = "aws.applications.total"
-	MetricSubscriptionsTotal = "aws.subscriptions.total"
-	MetricTopicsTotal        = "aws.topics.total"
-	MetricEndpointsTotal     = "aws.endpoints.total"
-	MetricEndpointsEnabled   = "aws.endpoints.enabled"
+	MetricApplicationsTotal  = ComponentName + ".applications.total"
+	MetricSubscriptionsTotal = ComponentName + ".subscriptions.total"
+	MetricTopicsTotal        = ComponentName + ".topics.total"
+	MetricEndpointsTotal     = ComponentName + ".endpoints.total"
+	MetricEndpointsEnabled   = ComponentName + ".endpoints.enabled"
 )
 
 var (
-	metricApplicationsTotal  kit.Gauge
-	metricSubscriptionsTotal kit.Gauge
-	metricTopicsTotal        kit.Gauge
-	metricEndpointsTotal     kit.Gauge
-	metricEndpointsEnabled   kit.Gauge
+	metricApplicationsTotal  snitch.Gauge
+	metricSubscriptionsTotal snitch.Gauge
+	metricTopicsTotal        snitch.Gauge
+	metricEndpointsTotal     snitch.Gauge
+	metricEndpointsEnabled   snitch.Gauge
 )
 
-func (c *Component) MetricsRegister(m *metrics.Component) {
-	metricApplicationsTotal = m.NewGauge(MetricApplicationsTotal)
-	metricSubscriptionsTotal = m.NewGauge(MetricSubscriptionsTotal)
-	metricTopicsTotal = m.NewGauge(MetricTopicsTotal)
-	metricEndpointsTotal = m.NewGauge(MetricEndpointsTotal)
-	metricEndpointsEnabled = m.NewGauge(MetricEndpointsEnabled)
+type metricsCollector struct {
+}
+
+func (c *metricsCollector) Describe(ch chan<- *snitch.Description) {
+	ch <- metricApplicationsTotal.Description()
+	ch <- metricSubscriptionsTotal.Description()
+	ch <- metricTopicsTotal.Description()
+	ch <- metricEndpointsTotal.Description()
+	ch <- metricEndpointsEnabled.Description()
+}
+
+func (c *metricsCollector) Collect(ch chan<- snitch.Metric) {
+	ch <- metricApplicationsTotal
+	ch <- metricSubscriptionsTotal
+	ch <- metricTopicsTotal
+	ch <- metricEndpointsTotal
+	ch <- metricEndpointsEnabled
+}
+
+func (c *Component) Metrics() snitch.Collector {
+	metricApplicationsTotal = snitch.NewGauge(MetricApplicationsTotal)
+	metricSubscriptionsTotal = snitch.NewGauge(MetricSubscriptionsTotal)
+	metricTopicsTotal = snitch.NewGauge(MetricTopicsTotal)
+	metricEndpointsTotal = snitch.NewGauge(MetricEndpointsTotal)
+	metricEndpointsEnabled = snitch.NewGauge(MetricEndpointsEnabled)
+
+	return &metricsCollector{}
 }
