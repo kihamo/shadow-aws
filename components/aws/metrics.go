@@ -5,11 +5,11 @@ import (
 )
 
 const (
-	MetricApplicationsTotal  = ComponentName + ".applications.total"
-	MetricSubscriptionsTotal = ComponentName + ".subscriptions.total"
-	MetricTopicsTotal        = ComponentName + ".topics.total"
-	MetricEndpointsTotal     = ComponentName + ".endpoints.total"
-	MetricEndpointsEnabled   = ComponentName + ".endpoints.enabled"
+	MetricApplicationsTotal  = ComponentName + "_applications_total"
+	MetricSubscriptionsTotal = ComponentName + "_subscriptions_total"
+	MetricTopicsTotal        = ComponentName + "_topics_total"
+	MetricEndpointsTotal     = ComponentName + "_endpoints_total"
+	MetricEndpointsEnabled   = ComponentName + "_endpoints_enabled"
 )
 
 var (
@@ -40,11 +40,11 @@ func (c *metricsCollector) Collect(ch chan<- snitch.Metric) {
 }
 
 func (c *Component) Metrics() snitch.Collector {
-	metricApplicationsTotal = snitch.NewGauge(MetricApplicationsTotal)
-	metricSubscriptionsTotal = snitch.NewGauge(MetricSubscriptionsTotal)
-	metricTopicsTotal = snitch.NewGauge(MetricTopicsTotal)
-	metricEndpointsTotal = snitch.NewGauge(MetricEndpointsTotal)
-	metricEndpointsEnabled = snitch.NewGauge(MetricEndpointsEnabled)
+	metricApplicationsTotal = snitch.NewGauge(MetricApplicationsTotal, "Number SNS applications")
+	metricSubscriptionsTotal = snitch.NewGauge(MetricSubscriptionsTotal, "Number SNS subscriptions")
+	metricTopicsTotal = snitch.NewGauge(MetricTopicsTotal, "Number SNS topics")
+	metricEndpointsTotal = snitch.NewGauge(MetricEndpointsTotal, "Number SNS endpoints")
+	metricEndpointsEnabled = snitch.NewGauge(MetricEndpointsEnabled, "Number SNS enabled endpoints")
 
 	return &metricsCollector{}
 }
