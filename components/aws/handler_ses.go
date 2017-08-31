@@ -2,8 +2,8 @@ package aws
 
 import (
 	"fmt"
-	"net/http"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/kihamo/shadow/components/dashboard"
@@ -15,42 +15,41 @@ type SESHandler struct {
 	component *Component
 }
 
-func (h *SESHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	config := dashboard.ConfigFromContext(r.Context())
-
+func (h *SESHandler) ServeHTTP(_ *dashboard.Response, r *dashboard.Request) {
 	errors := []string{}
 	vars := map[string]interface{}{
-		"sent":          0,
-		"maxSendRate":   0,
-		"max24HourSend": 0,
-		"remaining":     0,
-		"sentPercent":   0,
+		"sent":          float64(0),
+		"maxSendRate":   float64(0),
+		"max24HourSend": float64(0),
+		"remaining":     float64(0),
+		"sentPercent":   float64(0),
 		"stats":         nil,
+		"statsStart":    time.Now().Add(-time.Hour * 4),
 		"errors":        nil,
 		"message":       nil,
 
-		"sendFrom":    config.GetString(ConfigSesFromEmail),
+		"sendFrom":    r.Config().GetString(ConfigSesFromEmail),
 		"sendTo":      "",
 		"sendSubject": "",
 		"sendMessage": "",
 		"sendType":    "html",
 	}
 
-	name := config.GetString(ConfigSesFromName)
+	name := r.Config().GetString(ConfigSesFromName)
 	if name != "" {
 		vars["sendFrom"] = fmt.Sprintf("\"%s\" <%s>", name, vars["sendFrom"])
 	}
 
-	if h.IsPost(r) {
+	if r.IsPost() {
 		var (
 			text, html string
 		)
 
-		vars["sendFrom"] = r.FormValue("from")
-		vars["sendTo"] = r.FormValue("to")
-		vars["sendSubject"] = r.FormValue("subject")
-		vars["sendMessage"] = r.FormValue("message")
-		vars["sendType"] = r.FormValue("type")
+		vars["sendFrom"] = r.Original().FormValue("from")
+		vars["sendTo"] = r.Original().FormValue("to")
+		vars["sendSubject"] = r.Original().FormValue("subject")
+		vars["sendMessage"] = r.Original().FormValue("message")
+		vars["sendType"] = r.Original().FormValue("type")
 
 		if vars["sendType"] == "html" {
 			html = vars["sendMessage"].(string)

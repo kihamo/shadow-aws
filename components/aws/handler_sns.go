@@ -3,7 +3,6 @@ package aws
 import (
 	"net/http"
 
-	sdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/kihamo/shadow/components/dashboard"
 )
 
@@ -13,24 +12,24 @@ type SNSHandler struct {
 	component *Component
 }
 
-func (h *SNSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if h.IsPost(r) {
-		r.ParseForm()
-		updater := r.PostForm.Get("updater")
+func (h *SNSHandler) ServeHTTP(w *dashboard.Response, r *dashboard.Request) {
+	if r.IsPost() {
+		r.Original().ParseForm()
+		updater := r.Original().PostForm.Get("updater")
 
 		switch updater {
 		case "applications":
 			h.component.applicationsRun <- true
-			dashboard.LoggerFromContext(r.Context()).Info("Run updater applications manually")
+			r.Logger().Info("Run updater applications manually")
 		case "subscriptions":
 			h.component.subscriptionsRun <- true
-			dashboard.LoggerFromContext(r.Context()).Info("Run updater subscriptions manually")
+			r.Logger().Info("Run updater subscriptions manually")
 		case "topics":
 			h.component.topicsRun <- true
-			dashboard.LoggerFromContext(r.Context()).Info("Run updater topics manually")
+			r.Logger().Info("Run updater topics manually")
 		}
 
-		h.Redirect(r.RequestURI, http.StatusFound, w, r)
+		h.Redirect(r.Original().RequestURI, http.StatusFound, w, r)
 		return
 	}
 
@@ -39,6 +38,5 @@ func (h *SNSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		"applications":  h.component.GetApplications(),
 		"subscriptions": h.component.GetSubscriptions(),
 		"topics":        h.component.GetTopics(),
-		"sdkVersion":    sdk.SDKVersion,
 	})
 }

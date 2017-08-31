@@ -49,7 +49,7 @@ func (c *Component) GetName() string {
 }
 
 func (c *Component) GetVersion() string {
-	return ComponentVersion
+	return ComponentVersion + "/" + sdk.SDKVersion
 }
 
 func (c *Component) GetDependencies() []shadow.Dependency {

@@ -41,6 +41,7 @@ func (c *Component) GetDashboardRoutes() []*dashboard.Route {
 			Handler: &SNSHandler{
 				component: c,
 			},
+			Auth: true,
 		},
 		{
 			Methods: []string{http.MethodGet, http.MethodPost},
@@ -48,6 +49,7 @@ func (c *Component) GetDashboardRoutes() []*dashboard.Route {
 			Handler: &SESHandler{
 				component: c,
 			},
+			Auth: true,
 		},
 	}
 }

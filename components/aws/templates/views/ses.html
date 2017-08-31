@@ -1,222 +1,249 @@
-{{ define "js" }}
-    <script type="application/javascript">
-        $(function() {
-            Morris.Area({
-                element: 'stats-deliveries',
-                data: [
-                    {{ range $index, $stat := .stats }}
-                        {{ if $index }},{{ end }} {
-                            'time': '{{ $stat.Timestamp.Format "2006-01-02T15:04:05Z" }}',
-                            'emails': {{ $stat.DeliveryAttempts }}
-                        }
-                    {{ end }}
-                ],
-                xkey: 'time',
-                ykeys: ['emails'],
-                labels: ['Emails'],
-                pointSize: 2,
-                hideHover: 'auto',
-                resize: true,
-                xLabelFormat: function(x) {
-                    return x.toString().substr(4,6) + ' ' + x.toTimeString().substr(0,5);
-                }
-            });
-
-            Morris.Area({
-                element: 'stats-bounces',
-                data: [
-                    {{ range $index, $stat := .stats }}
-                        {{ if $index }},{{ end }} {
-                            'time': '{{ $stat.Timestamp.Format "2006-01-02T15:04:05Z" }}',
-                            'emails': {{ $stat.Bounces }}
-                        }
-                    {{ end }}
-                ],
-                xkey: 'time',
-                ykeys: ['emails'],
-                labels: ['Emails'],
-                pointSize: 2,
-                hideHover: 'auto',
-                resize: true,
-                xLabelFormat: function(x) {
-                    return x.toString().substr(4,6) + ' ' + x.toTimeString().substr(0,5);
-                }
-            });
-
-            Morris.Area({
-                element: 'stats-complaints',
-                data: [
-                    {{ range $index, $stat := .stats }}
-                        {{ if $index }},{{ end }} {
-                            'time': '{{ $stat.Timestamp.Format "2006-01-02T15:04:05Z" }}',
-                            'emails': {{ $stat.Complaints }}
-                        }
-                    {{ end }}
-                ],
-                xkey: 'time',
-                ykeys: ['emails'],
-                labels: ['Emails'],
-                pointSize: 2,
-                hideHover: 'auto',
-                resize: true,
-                xLabelFormat: function(x) {
-                    return x.toString().substr(4,6) + ' ' + x.toTimeString().substr(0,5);
-                }
-            });
-
-            Morris.Area({
-                element: 'stats-rejects',
-                data: [
-                    {{ range $index, $stat := .stats }}
-                        {{ if $index }},{{ end }} {
-                            'time': '{{ $stat.Timestamp.Format "2006-01-02T15:04:05Z" }}',
-                            'emails': {{ $stat.Rejects }}
-                        }
-                    {{ end }}
-                ],
-                xkey: 'time',
-                ykeys: ['emails'],
-                labels: ['Emails'],
-                pointSize: 2,
-                hideHover: 'auto',
-                resize: true,
-                xLabelFormat: function(x) {
-                    return x.toString().substr(4,6) + ' ' + x.toTimeString().substr(0,5);
-                }
-            });
-        });
-    </script>
-{{ end }}
-
 {{ define "content" }}
-<div class="row">
-    <div class="col-lg-12">
-        <h1 class="page-header">Amazon Simple Email Service</h1>
+<div class="page-title">
+    <div class="title_left">
+        <h3>Amazon Simple Email Service</h3>
     </div>
 </div>
 
-{{ if .errors }}
-<div class="alert alert-danger alert-dismissable">
-    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-    {{ range $index, $error := .errors }}
-        {{ if $index }},{{ end }}
-        {{ $error }}
-    {{end}}
-</div>
-{{ end }}
-
-{{ if .message }}
-<div class="alert alert-info alert-dismissable">
-    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-    {{ .message }}
-</div>
-{{ end }}
+<div class="clearfix"></div>
 
 {{ if gt .remaining 0.0 }}
-<div class="panel panel-success">
-    <div class="panel-heading">Send email</div>
-    <div class="panel-body">
-        <form class="form-horizontal" role="form" method="post" id="send-mail" action="/aws/ses">
-            <div class="form-group">
-                <label for="to" class="col-sm-2 control-label">From</label>
-                <div class="col-sm-10">
-                    <input type="text" class="form-control" id="from" name="from" placeholder="example1@domain.com" value="{{ .sendFrom }}">
+<div class="row">
+    <div class="col-md-12 col-sm-12 col-xs-12">
+        <div class="x_panel">
+            <div class="x_title">
+                <h2>Send SMS</h2>
+                <ul class="nav navbar-right panel_toolbox">
+                    <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
+                </ul>
+                <div class="clearfix"></div>
+            </div>
+            <div class="x_content">
+                <form class="form-horizontal form-label-left" role="form" method="post" id="send-mail" action="/aws/ses" novalidate>
+                    <div class="item form-group">
+                        <label for="from" class="control-label col-md-3 col-sm-3 col-xs-12">
+                            From <span class="required">*</span>
+                        </label>
+                        <div class="col-md-6 col-sm-6 col-xs-12">
+                            <input type="text" class="form-control" id="from" name="from" placeholder="example1@domain.com" value="{{ .sendFrom }}" required="required">
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label for="to" class="control-label col-md-3 col-sm-3 col-xs-12">
+                            To <span class="required">*</span>
+                        </label>
+                        <div class="col-md-6 col-sm-6 col-xs-12">
+                            <input type="text" class="form-control" id="to" name="to" placeholder="example1@domain.com, example2@domain.com" value="{{ .sendTo }}" required="required">
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label for="subject" class="control-label col-md-3 col-sm-3 col-xs-12">
+                            Subject <span class="required">*</span>
+                        </label>
+                        <div class="col-md-6 col-sm-6 col-xs-12">
+                            <input type="text" class="form-control" id="subject" name="subject" value="{{ .sendSubject }}" required="required">
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label for="type" class="control-label col-md-3 col-sm-3 col-xs-12">
+                            Content type <span class="required">*</span>
+                        </label>
+                        <div class="col-md-6 col-sm-6 col-xs-12">
+                            <select class="form-control select2" style="width:100%" name="type" id="type" required="required">
+                                <option value="plain"{{ if eq .sendType "plain" }} selected{{ end }}>Plain text</option>
+                                <option value="html"{{ if eq .sendType "html" }} selected{{ end }}>HTML</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label for="message" class="control-label col-md-3 col-sm-3 col-xs-12">
+                            Message <span class="required">*</span>
+                        </label>
+                        <div class="col-md-6 col-sm-6 col-xs-12">
+                            <textarea class="form-control" rows="4" name="message" id="message" required="required">{{ .sendMessage }}</textarea>
+                        </div>
+                    </div>
+                    <div class="ln_solid"></div>
+                    <div class="form-group">
+                        <div class="col-md-6 col-md-offset-3">
+                            <button type="reset" class="btn btn-info" value="reset">Reset</button>
+                            <button type="submit" class="btn btn-success">Send</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 col-sm-6 col-xs-12">
+        <div class="x_panel">
+            <div class="x_title">
+                <h2>Quota</h2>
+                <ul class="nav navbar-right panel_toolbox">
+                    <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
+                </ul>
+                <div class="clearfix"></div>
+            </div>
+            <div class="x_content">
+                <div id="quota" style="height:300px;"></div>
+
+                <div>
+                    <ul class="list-inline widget_tally">
+                        <li>
+                            <p>
+                                <span class="month">Sending quota per 24 hour period</span>
+                                <span class="count"><em><strong class="text-danger">{{ .max24HourSend }}</strong> emails</em></span>
+                            </p>
+                        </li>
+                        <li>
+                            <p>
+                                <span class="month">Max send rate</span>
+                                <span class="count"><em><strong class="text-danger">{{ .maxSendRate }}</strong> emails/second</em></span>
+                            </p>
+                        </li>
+                    </ul>
                 </div>
             </div>
-            <div class="form-group">
-                <label for="to" class="col-sm-2 control-label">To</label>
-                <div class="col-sm-10">
-                    <input type="text" class="form-control" id="to" name="to" placeholder="example1@domain.com, example2@domain.com" value="{{ .sendTo }}">
-                </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-sm-6 col-xs-12">
+        <div class="x_panel">
+            <div class="x_title">
+                <h2>Statistics</h2>
+                <ul class="nav navbar-right panel_toolbox">
+                    <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
+                </ul>
+                <div class="clearfix"></div>
             </div>
-            <div class="form-group">
-                <label for="subject" class="col-sm-2 control-label">Subject</label>
-                <div class="col-sm-10">
-                    <input type="text" class="form-control" id="subject" name="subject" value="{{ .sendSubject }}">
-                </div>
+            <div class="x_content">
+                <div id="stats" style="height:372px;"></div>
             </div>
-            <div class="form-group">
-                <label for="type" class="col-sm-2 control-label">Content type</label>
-                <div class="col-sm-10">
-                    <select class="form-control" rows="4" name="type" id="type">
-                        <option value="plain"{{ if eq .sendType "plain" }} selected{{ end }}>Plain text</option>
-                        <option value="html"{{ if eq .sendType "html" }} selected{{ end }}>HTML</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="message" class="col-sm-2 control-label">Message</label>
-                <div class="col-sm-10">
-                    <textarea class="form-control" rows="4" name="message" id="message">{{ .sendMessage }}</textarea>
-                </div>
-            </div>
-            <div class="form-group">
-                <div class="col-sm-10 col-sm-offset-2">
-                    <input id="submit" name="submit" type="submit" value="Send" class="btn btn-primary">
-                </div>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 {{ end }}
+{{ end }}
 
-<div class="panel panel-info">
-    <div class="panel-heading">Statistics</div>
-    <div class="panel-body">
-        <div class="row" style="margin:0">
-            <div class="col-md-6 text-left text-warning small" style="padding:0"><strong>{{ .sent }} Sent</strong></div>
-            <div class="col-md-6 text-right text-muted small" style="padding:0"><strong>{{ .remaining }} Remaining</strong></div>
-        </div>
-        <div class="row" style="margin:0">
-            <div class="progress" style="margin-bottom:0;">
-                <div class="progress-bar progress-bar-info progress-bar-striped active" role="progressbar" aria-valuenow="{{ .sentPercent }}" aria-valuemin="0" aria-valuemax="100" style="width:{{ .sentPercent }}%;min-width:2em">
-                    {{ printf "%.0f" .sentPercent }}%
-                </div>
-            </div>
-        </div>
-        <div class="row" style="margin:20px 0 -20px 0">
-            <div class="list-group">
-                <span class="list-group-item">
-                    Sending quota:
-                    <span class="pull-right text-muted small"><em>send <strong class="text-danger">{{ .max24HourSend }}</strong> emails per 24 hour period</em></span>
-                </span>
-                <span class="list-group-item">
-                    Quota used:
-                    <span class="pull-right text-muted small"><em><strong>{{ printf "%.0f" .sentPercent }}%</strong></em></span>
-                </span>
-                <span class="list-group-item">
-                    Max send rate:
-                    <span class="pull-right text-muted small"><em><strong class="text-danger">{{ .maxSendRate }}</strong> emails/second</em></span>
-                </span>
-            </div>
-        </div>
-        <div class="row" style="margin:20px -15px -20px -15px">
-            <div class="col-lg-6">
-                <div class="well well-sm">
-                    <h4 class="text-center">Deliveries</h4>
-                    <div id="stats-deliveries"></div>
-                </div>
-            </div>
-            <div class="col-lg-6">
-                <div class="well well-sm">
-                    <h4 class="text-center">Bounces</h4>
-                    <div id="stats-bounces"></div>
-                </div>
-            </div>
-            <div class="col-lg-6">
-                <div class="well well-sm">
-                    <h4 class="text-center">Complaints</h4>
-                    <div id="stats-complaints"></div>
-                </div>
-            </div>
-            <div class="col-lg-6">
-                <div class="well well-sm">
-                    <h4 class="text-center">Rejects</h4>
-                    <div id="stats-rejects"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{{ define "js" }}
+<script src="/dashboard/assets/vendors/validator/js/validator.min.js?v={{ .Application.build }}"></script>
+<script src="/dashboard/assets/vendors/echarts/js/echarts.min.js?v={{ .Application.build }}"></script>
 
+<script type="application/javascript">
+    $(document).ready(function () {
+        {{ if .errors }}
+        {{ range $index, $error := .errors }}
+        new PNotify({
+            title: 'Error',
+            text: '{{ $error }}',
+            type: 'error',
+            hide: false,
+            styling: 'bootstrap3'
+        });
+        {{end}}
+        {{ end }}
+
+        {{ if .message }}
+        new PNotify({
+            title: 'Info',
+            text: '{{ .message }}',
+            type: 'success',
+            hide: false,
+            styling: 'bootstrap3'
+        });
+        {{ end }}
+
+        $('#send-mail').submit(function () {
+            var el = $(this);
+
+            if (el.data('valid')) {
+                el.submit();
+            }
+
+            return false;
+        });
+
+        var quotaChart = echarts.init(document.getElementById('quota'), echartsTheme);
+        quotaChart.setOption({
+            tooltip: {
+                trigger: 'item',
+                formatter: "{b}: {c} ({d}%)"
+            },
+            toolbox: {
+                show: true,
+                feature: {
+                    saveAsImage: {
+                        show: true,
+                        title: 'Save',
+                        name: 'quota'
+                    }
+                }
+            },
+            series: [{
+                type: 'pie',
+                radius: ['35%', '55%'],
+                label: {
+                    normal: {
+                        show: true
+                    }
+                },
+                data: [
+                    { value: {{ .sent }}, name: 'Sent' },
+                    { value: {{ .remaining }}, name: 'Remaining' }
+                ]
+            }]
+        });
+
+        var statsChart = echarts.init(document.getElementById('stats'), echartsTheme);
+        statsChart.setOption({
+            toolbox: {
+                show: true,
+                feature: {
+                    saveAsImage: {
+                        show: true,
+                        title: 'Save',
+                        name: 'stats'
+                    }
+                }
+            },
+            tooltip : {
+                trigger: 'axis',
+                axisPointer : {
+                    type : 'shadow'
+                }
+            },
+            legend: {
+                data:['Deliveries','Bounces','Complaints','Rejects']
+            },
+            dataZoom: {
+                show: true,
+                startValue: '{{ .statsStart.Format "2006-01-02T15:04:05Z07:00" }}'
+            },
+            xAxis: {
+                type: 'time'
+            },
+            yAxis: {
+            },
+            series: [{
+                name: 'Deliveries',
+                type: 'bar',
+                data: [{{ range $index, $stat := .stats }}{{ if $index }},{{ end }}['{{ $stat.Timestamp.Format "2006-01-02T15:04:05Z07:00" }}',{{ $stat.DeliveryAttempts }}]{{ end }}]
+            },{
+                name: 'Bounces',
+                type: 'bar',
+                data: [{{ range $index, $stat := .stats }}{{ if $index }},{{ end }}['{{ $stat.Timestamp.Format "2006-01-02T15:04:05Z07:00" }}',{{ $stat.Bounces }}]{{ end }}]
+            },{
+                name: 'Complaints',
+                type: 'bar',
+                data: [{{ range $index, $stat := .stats }}{{ if $index }},{{ end }}['{{ $stat.Timestamp.Format "2006-01-02T15:04:05Z07:00" }}',{{ $stat.Complaints }}]{{ end }}]
+            },{
+                name: 'Rejects',
+                type: 'bar',
+                data: [{{ range $index, $stat := .stats }}{{ if $index }},{{ end }}['{{ $stat.Timestamp.Format "2006-01-02T15:04:05Z07:00" }}',{{ $stat.Rejects }}]{{ end }}]
+            }]
+        });
+    });
+</script>
 {{ end }}
