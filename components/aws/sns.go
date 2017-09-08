@@ -207,10 +207,7 @@ func (c *Component) updaterEndpoints() {
 		if err == nil {
 			if metricEndpointsTotal != nil {
 				metricEndpointsTotal.With("arn", applications[i].Arn).Set(float64(applications[i].EndpointsCount))
-			}
-
-			if metricEndpointsEnabled != nil {
-				metricEndpointsEnabled.With("arn", applications[i].Arn).Set(float64(applications[i].EndpointsEnabledCount))
+				metricEndpointsTotal.With("arn", applications[i].Arn, "status", "enabled").Set(float64(applications[i].EndpointsEnabledCount))
 			}
 		}
 

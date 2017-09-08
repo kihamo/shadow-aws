@@ -58,13 +58,11 @@ func (c *Component) SendEmail(to []string, subject string, text string, html str
 
 	_, err := c.GetSES().SendEmail(input)
 
-	if err != nil {
-		if metricSesEmailTotalFailed != nil {
-			metricSesEmailTotalFailed.Inc()
-		}
-	} else {
-		if metricSesEmailTotalSuccess != nil {
-			metricSesEmailTotalSuccess.Inc()
+	if metricSesEmailTotal != nil {
+		if err != nil {
+			metricSesEmailTotal.With("status", "failed").Inc()
+		} else {
+			metricSesEmailTotal.With("status", "success").Inc()
 		}
 	}
 

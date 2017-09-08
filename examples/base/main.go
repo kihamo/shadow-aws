@@ -10,6 +10,7 @@ import (
 	"github.com/kihamo/shadow/components/dashboard"
 	"github.com/kihamo/shadow/components/logger"
 	"github.com/kihamo/shadow/components/metrics"
+	"github.com/kihamo/shadow/components/workers"
 )
 
 func main() {
@@ -24,6 +25,7 @@ func main() {
 			new(dashboard.Component),
 			new(logger.Component),
 			new(metrics.Component),
+			new(workers.Component),
 		},
 	)
 
