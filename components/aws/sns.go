@@ -182,6 +182,8 @@ func (c *Component) updaterApplications() {
 func (c *Component) updaterEndpoints() {
 	applications := c.GetApplications()
 	batchStartIndex := 0
+	endpointsTotal := 0
+	endpointsEnabledTotal := 0
 
 	for i := range applications {
 		params := &sns.ListEndpointsByPlatformApplicationInput{
@@ -205,10 +207,8 @@ func (c *Component) updaterEndpoints() {
 		})
 
 		if err == nil {
-			if metricEndpointsTotal != nil {
-				metricEndpointsTotal.With("arn", applications[i].Arn).Set(float64(applications[i].EndpointsCount))
-				metricEndpointsTotal.With("arn", applications[i].Arn, "status", "enabled").Set(float64(applications[i].EndpointsEnabledCount))
-			}
+			endpointsTotal += applications[i].EndpointsCount
+			endpointsEnabledTotal += applications[i].EndpointsEnabledCount
 		}
 
 		if err != nil {
@@ -250,6 +250,11 @@ func (c *Component) updaterEndpoints() {
 
 			batchStartIndex = batchEndIndex
 		}
+	}
+
+	if metricEndpointsTotal != nil {
+		metricEndpointsTotal.Set(float64(endpointsTotal))
+		metricEndpointsTotal.With("status", "enabled").Set(float64(endpointsEnabledTotal))
 	}
 }
 
