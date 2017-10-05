@@ -1,10 +1,10 @@
-package internal
+package aws
 
 import (
 	"strings"
 )
 
-type AwsArnParse struct {
+type Arn struct {
 	Arn          string
 	Partition    string
 	Service      string
@@ -14,11 +14,11 @@ type AwsArnParse struct {
 	ResourceType string
 }
 
-func ParseArn(arn string) *AwsArnParse {
+func ParseArn(arn string) *Arn {
 	// http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html#genref-arns
 
 	parts := strings.Split(arn, ":")
-	result := AwsArnParse{
+	result := Arn{
 		Arn:       parts[0],
 		Partition: parts[1],
 		Service:   parts[2],
