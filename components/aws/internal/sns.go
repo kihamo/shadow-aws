@@ -1,73 +1,67 @@
-package aws
+package internal
 
 import (
 	"time"
 
 	sdk "github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
+	"github.com/kihamo/shadow-aws/components/aws"
 )
 
 const (
 	endpointsBatchSize = 50
 )
 
-type AwsSnsApplication struct {
-	Arn                       string
-	AwsAttributes             map[string]*string
-	Enabled                   bool
-	EndpointsCount            int
-	EndpointsEnabledCount     int
-	CertificateExpirationDate *time.Time
-	LastUpdate                time.Time
+func (c *Component) GetSNS() *sns.SNS {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	if _, ok := c.services[ServiceSNS]; !ok {
+		c.services[ServiceSNS] = sns.New(session.New(c.awsConfig))
+	}
+
+	return c.services[ServiceSNS].(*sns.SNS)
 }
 
-func (a AwsSnsApplication) IsIAM() bool {
-	if _, ok := a.AwsAttributes["SuccessFeedbackRoleArn"]; !ok {
-		return false
+func (c *Component) GetApplications() []aws.SnsApplication {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+
+	applications := make([]aws.SnsApplication, len(c.applications))
+
+	i := 0
+	for _, application := range c.applications {
+		applications[i] = application
+		i++
 	}
 
-	if _, ok := a.AwsAttributes["FailureFeedbackRoleArn"]; !ok {
-		return false
-	}
-
-	return true
+	return applications
 }
 
-func (a AwsSnsApplication) GetEnabledCount() int {
-	if a.EndpointsEnabledCount <= 0 {
-		return 0
-	}
+func (c *Component) GetSubscriptions() []*sns.Subscription {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
 
-	return a.EndpointsEnabledCount
+	subscriptions := make([]*sns.Subscription, len(c.subscriptions))
+	copy(subscriptions, c.subscriptions)
+
+	return subscriptions
 }
 
-func (a AwsSnsApplication) GetEnabledPercent() int {
-	if a.EndpointsCount <= 0 {
-		return 0
-	}
+func (c *Component) GetTopics() []*sns.Topic {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
 
-	return (100 * a.EndpointsEnabledCount) / a.EndpointsCount
-}
+	topics := make([]*sns.Topic, len(c.topics))
+	copy(topics, c.topics)
 
-func (a AwsSnsApplication) GetDisabledCount() int {
-	if a.EndpointsCount <= 0 || a.EndpointsEnabledCount <= 0 {
-		return 0
-	}
-
-	return a.EndpointsCount - a.EndpointsEnabledCount
-}
-
-func (a AwsSnsApplication) GetDisabledPercent() int {
-	if a.EndpointsCount <= 0 {
-		return 0
-	}
-
-	return 100 - a.GetEnabledPercent()
+	return topics
 }
 
 func (c *Component) loadUpdaters() {
 	go func() {
-		ticker := time.NewTicker(c.config.GetDuration(ConfigUpdaterApplicationsDuration))
+		ticker := time.NewTicker(c.config.GetDuration(aws.ConfigUpdaterApplicationsDuration))
 
 		for {
 			select {
@@ -82,7 +76,7 @@ func (c *Component) loadUpdaters() {
 	}()
 
 	go func() {
-		ticker := time.NewTicker(c.config.GetDuration(ConfigUpdaterSubscriptionsDuration))
+		ticker := time.NewTicker(c.config.GetDuration(aws.ConfigUpdaterSubscriptionsDuration))
 
 		for {
 			select {
@@ -97,7 +91,7 @@ func (c *Component) loadUpdaters() {
 	}()
 
 	go func() {
-		ticker := time.NewTicker(c.config.GetDuration(ConfigUpdaterTopicsDuration))
+		ticker := time.NewTicker(c.config.GetDuration(aws.ConfigUpdaterTopicsDuration))
 
 		for {
 			select {
@@ -111,23 +105,35 @@ func (c *Component) loadUpdaters() {
 		}
 	}()
 
-	if c.config.GetBool(ConfigRunUpdatersOnStartup) {
-		c.applicationsRun <- true
-		c.subscriptionsRun <- true
-		c.topicsRun <- true
+	if c.config.GetBool(aws.ConfigRunUpdatersOnStartup) {
+		c.RunApplicationsUpdater()
+		c.RunSubscriptionsUpdater()
+		c.RunTopicsUpdater()
 	}
+}
+
+func (c *Component) RunApplicationsUpdater() {
+	c.applicationsRun <- struct{}{}
+}
+
+func (c *Component) RunSubscriptionsUpdater() {
+	c.subscriptionsRun <- struct{}{}
+}
+
+func (c *Component) RunTopicsUpdater() {
+	c.topicsRun <- struct{}{}
 }
 
 func (c *Component) updaterApplications() {
 	lastUpdate := time.Now().UTC()
-	applications := map[string]AwsSnsApplication{}
+	applications := map[string]aws.SnsApplication{}
 	params := &sns.ListPlatformApplicationsInput{}
 
 	err := c.GetSNS().ListPlatformApplicationsPages(params, func(p *sns.ListPlatformApplicationsOutput, lastPage bool) bool {
 		for _, a := range p.PlatformApplications {
 			arn := sdk.StringValue(a.PlatformApplicationArn)
 
-			app := AwsSnsApplication{
+			app := aws.SnsApplication{
 				Arn:                   arn,
 				AwsAttributes:         a.Attributes,
 				Enabled:               true,

@@ -1,12 +1,25 @@
-package aws
+package internal
 
 import (
 	"errors"
 	"fmt"
 
 	sdk "github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ses"
+	"github.com/kihamo/shadow-aws/components/aws"
 )
+
+func (c *Component) GetSES() *ses.SES {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	if _, ok := c.services[ServiceSES]; !ok {
+		c.services[ServiceSES] = ses.New(session.New(c.awsConfig))
+	}
+
+	return c.services[ServiceSES].(*ses.SES)
+}
 
 func (c *Component) SendEmail(to []string, subject string, text string, html string, from string) error {
 	if len(to) == 0 {
@@ -22,8 +35,8 @@ func (c *Component) SendEmail(to []string, subject string, text string, html str
 	}
 
 	if from == "" {
-		from = c.config.GetString(ConfigSesFromEmail)
-		name := c.config.GetString(ConfigSesFromName)
+		from = c.config.GetString(aws.ConfigSesFromEmail)
+		name := c.config.GetString(aws.ConfigSesFromName)
 		if name != "" {
 			from = fmt.Sprintf("\"%s\" <%s>", name, from)
 		}

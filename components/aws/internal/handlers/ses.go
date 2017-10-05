@@ -1,4 +1,4 @@
-package aws
+package handlers
 
 import (
 	"fmt"
@@ -6,13 +6,14 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/ses"
+	"github.com/kihamo/shadow-aws/components/aws"
 	"github.com/kihamo/shadow/components/dashboard"
 )
 
 type SESHandler struct {
 	dashboard.Handler
 
-	component *Component
+	Component aws.Component
 }
 
 func (h *SESHandler) ServeHTTP(_ *dashboard.Response, r *dashboard.Request) {
@@ -28,14 +29,14 @@ func (h *SESHandler) ServeHTTP(_ *dashboard.Response, r *dashboard.Request) {
 		"errors":        nil,
 		"message":       nil,
 
-		"sendFrom":    r.Config().GetString(ConfigSesFromEmail),
+		"sendFrom":    r.Config().GetString(aws.ConfigSesFromEmail),
 		"sendTo":      "",
 		"sendSubject": "",
 		"sendMessage": "",
 		"sendType":    "html",
 	}
 
-	name := r.Config().GetString(ConfigSesFromName)
+	name := r.Config().GetString(aws.ConfigSesFromName)
 	if name != "" {
 		vars["sendFrom"] = fmt.Sprintf("\"%s\" <%s>", name, vars["sendFrom"])
 	}
@@ -59,14 +60,14 @@ func (h *SESHandler) ServeHTTP(_ *dashboard.Response, r *dashboard.Request) {
 
 		to := strings.Split(vars["sendTo"].(string), ",")
 
-		if err := h.component.SendEmail(to, vars["sendSubject"].(string), text, html, vars["sendFrom"].(string)); err != nil {
+		if err := h.Component.SendEmail(to, vars["sendSubject"].(string), text, html, vars["sendFrom"].(string)); err != nil {
 			errors = append(errors, err.Error())
 		} else {
 			vars["message"] = "Message send success"
 		}
 	}
 
-	service := h.component.GetSES()
+	service := h.Component.GetSES()
 
 	// quota
 	quota, err := service.GetSendQuota(&ses.GetSendQuotaInput{})
@@ -90,5 +91,5 @@ func (h *SESHandler) ServeHTTP(_ *dashboard.Response, r *dashboard.Request) {
 
 	vars["errors"] = errors
 
-	h.Render(r.Context(), ComponentName, "ses", vars)
+	h.Render(r.Context(), h.Component.GetName(), "ses", vars)
 }

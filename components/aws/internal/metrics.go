@@ -1,15 +1,16 @@
-package aws
+package internal
 
 import (
+	"github.com/kihamo/shadow-aws/components/aws"
 	"github.com/kihamo/snitch"
 )
 
 const (
-	MetricApplicationsTotal  = ComponentName + "_applications_total"
-	MetricSubscriptionsTotal = ComponentName + "_subscriptions_total"
-	MetricTopicsTotal        = ComponentName + "_topics_total"
-	MetricEndpointsTotal     = ComponentName + "_endpoints_total"
-	MetricSesEmailTotal      = ComponentName + "_ses_email_total"
+	MetricApplicationsTotal  = aws.ComponentName + "_applications_total"
+	MetricSubscriptionsTotal = aws.ComponentName + "_subscriptions_total"
+	MetricTopicsTotal        = aws.ComponentName + "_topics_total"
+	MetricEndpointsTotal     = aws.ComponentName + "_endpoints_total"
+	MetricSesEmailTotal      = aws.ComponentName + "_ses_email_total"
 )
 
 var (

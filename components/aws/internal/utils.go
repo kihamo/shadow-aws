@@ -1,4 +1,4 @@
-package aws
+package internal
 
 import (
 	"strings"

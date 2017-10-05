@@ -4,7 +4,7 @@
 // templates/views/sns.html
 // DO NOT EDIT!
 
-package aws
+package internal
 
 import (
 	"github.com/elazarl/go-bindata-assetfs"
