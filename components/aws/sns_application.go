@@ -6,7 +6,7 @@ import (
 
 type SnsApplication struct {
 	Arn                       string
-	AwsAttributes             map[string]*string
+	AwsAttributes             map[string]string
 	Enabled                   bool
 	EndpointsCount            int
 	EndpointsEnabledCount     int

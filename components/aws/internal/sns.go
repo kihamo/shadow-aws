@@ -135,11 +135,15 @@ func (c *Component) updaterApplications() {
 
 			app := aws.SnsApplication{
 				Arn:                   arn,
-				AwsAttributes:         a.Attributes,
+				AwsAttributes:         make(map[string]string, len(a.Attributes)),
 				Enabled:               true,
 				EndpointsCount:        -1,
 				EndpointsEnabledCount: -1,
 				LastUpdate:            lastUpdate,
+			}
+
+			for k, v := range a.Attributes {
+				app.AwsAttributes[k] = *v
 			}
 
 			if dateRaw, ok := a.Attributes["AppleCertificateExpirationDate"]; ok {
