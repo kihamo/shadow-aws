@@ -52,19 +52,18 @@
         <div class="clearfix"></div>
     </div>
     <div class="x_content">
-        <table class="table table-hover table-striped datatable">
+
+        <table class="table table-hover table-striped" id="applications">
             <thead>
-            <th>#</th>
-            <th>IAM</th>
-            <th>Application ARN</th>
-            <th>Certificate expiration</th>
-            <th>Endpoints</th>
-            <th>Last update</th>
+                <th>IAM</th>
+                <th>Application ARN</th>
+                <th>Certificate expiration</th>
+                <th>Endpoints</th>
+                <th>Last update</th>
             </thead>
             <tbody>
             {{ range $i, $application := .applications }}
             <tr {{if not $application.Enabled}}class="danger"{{end}}>
-                <td>{{ add $i 1 }}</td>
                 <td class="text-center">
                     {{ if $application.IsIAM }}
                     <span class="glyphicon glyphicon-ok" style="color: #5cb85c"></span>
@@ -76,8 +75,6 @@
                 <td>
                     {{ if $application.CertificateExpirationDate }}
                     {{ $application.CertificateExpirationDate }}
-                    {{ else }}
-                    &mdash;
                     {{ end }}
                 </td>
                 <td>
@@ -120,14 +117,12 @@
         <table class="table table-striped datatable datatable-counter">
             <thead>
             <tr>
-                <th></th>
                 <th>Topic ARN</th>
             </tr>
             </thead>
             <tbody>
             {{ range $i, $topic := .topics }}
             <tr>
-                <td>{{ add $i 1 }}</td>
                 <td>{{ $topic.TopicArn }}</td>
             </tr>
             {{ end }}
@@ -157,14 +152,12 @@
     <div class="x_content">
         <table class="table table-striped datatable datatable-counter">
             <thead>
-                <th></th>
                 <th>Subscription ARN</th>
                 <th>Endpoint</th>
             </thead>
             <tbody>
             {{ range $i, $subscription := .subscriptions }}
             <tr>
-                <td>{{ add $i 1 }}</td>
                 <td>{{ $subscription.SubscriptionArn }}</td>
                 <td>{{ $subscription.Endpoint }}</td>
             </tr>
@@ -193,6 +186,77 @@
             });
 
             return false;
+        });
+
+        $.fn.dataTableExt.afnFiltering.push(
+            function(settings, data){
+                if (settings.sTableId === 'applications') {
+                    var v = $('#cert-selector').val();
+
+                    if (v === 'expired') {
+                        if (!data[2].length) {
+                            return false;
+                        }
+
+                        var d = Date.parse(data[2]);
+
+                        if (!d) {
+                            return false;
+                        }
+
+                        return new Date() >= d;
+                    }
+                }
+
+                return true
+            });
+
+        $('#applications').DataTable({
+            columns: [
+                {
+                    data: 0
+                },
+                {
+                    data: 1
+                },
+                {
+                    data: 2,
+                    render: function (date) {
+                        if (date.length) {
+                            return dateToString(date);
+                        }
+
+                        return ''
+                    }
+                },
+                {
+                    data: 3,
+                    orderable: false
+                },
+                {
+                    data: 4,
+                    render: function (date) {
+                        return dateToString(date);
+                    }
+                }
+            ],
+            initComplete: function () {
+                this.api().columns([2]).every(function() {
+                    var
+                        column = this,
+                        select = $('<select style="float:right" id="cert-selector"></select>')
+                            .appendTo($(column.header()))
+                            .on('change', function() {
+                                column.search('', true, false).draw();
+                            })
+                            .on('click', function(e) {
+                                e.stopPropagation();
+                            });
+
+                    select.append('<option value="all">Show all</option>');
+                    select.append('<option value="expired">Expired</option>');
+                });
+            }
         });
     });
 </script>
