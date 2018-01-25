@@ -5,7 +5,6 @@ import (
 
 	"github.com/kihamo/shadow"
 	aws "github.com/kihamo/shadow-aws/components/aws/instance"
-	alerts "github.com/kihamo/shadow/components/alerts/instance"
 	config "github.com/kihamo/shadow/components/config/instance"
 	dashboard "github.com/kihamo/shadow/components/dashboard/instance"
 	logger "github.com/kihamo/shadow/components/logger/instance"
@@ -20,7 +19,6 @@ func main() {
 		"12345-full",
 		[]shadow.Component{
 			aws.NewComponent(),
-			alerts.NewComponent(),
 			config.NewComponent(),
 			dashboard.NewComponent(),
 			logger.NewComponent(),

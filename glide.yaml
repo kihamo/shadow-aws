@@ -1,5 +1,5 @@
 package: github.com/kihamo/shadow-aws
 import:
 - package: github.com/aws/aws-sdk-go
-  version: ~v1.12.46
+  version: ~v1.12.67
 - package: github.com/kihamo/shadow
