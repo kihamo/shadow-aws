@@ -44,15 +44,15 @@ type Component struct {
 	topicsRun    chan struct{}
 }
 
-func (c *Component) GetName() string {
+func (c *Component) Name() string {
 	return aws.ComponentName
 }
 
-func (c *Component) GetVersion() string {
+func (c *Component) Version() string {
 	return aws.ComponentVersion + "/" + sdk.SDKVersion
 }
 
-func (c *Component) GetDependencies() []shadow.Dependency {
+func (c *Component) Dependencies() []shadow.Dependency {
 	return []shadow.Dependency{
 		{
 			Name:     config.ComponentName,
@@ -88,12 +88,12 @@ func (c *Component) Init(a shadow.Application) error {
 }
 
 func (c *Component) Run() error {
-	c.logger = logger.NewOrNop(c.GetName(), c.application)
+	c.logger = logger.NewOrNop(c.Name(), c.application)
 
 	awsConfig := sdk.NewConfig().
-		WithCredentials(credentials.NewStaticCredentials(c.config.GetString(aws.ConfigKey), c.config.GetString(aws.ConfigSecret), "")).
-		WithRegion(c.config.GetString(aws.ConfigRegion)).
-		WithLogLevel(sdk.LogLevelType(c.config.GetUint(aws.ConfigLogLevel))).
+		WithCredentials(credentials.NewStaticCredentials(c.config.String(aws.ConfigKey), c.config.String(aws.ConfigSecret), "")).
+		WithRegion(c.config.String(aws.ConfigRegion)).
+		WithLogLevel(sdk.LogLevelType(c.config.Uint(aws.ConfigLogLevel))).
 		WithLogger(c.logger)
 
 	fields := map[string]interface{}{

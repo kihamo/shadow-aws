@@ -34,7 +34,7 @@ func (h *SNSHandler) ServeHTTP(w *dashboard.Response, r *dashboard.Request) {
 		return
 	}
 
-	h.Render(r.Context(), h.Component.GetName(), "sns", map[string]interface{}{
+	h.Render(r.Context(), h.Component.Name(), "sns", map[string]interface{}{
 		"services":      h.Component.GetServices(),
 		"applications":  h.Component.GetApplications(),
 		"subscriptions": h.Component.GetSubscriptions(),

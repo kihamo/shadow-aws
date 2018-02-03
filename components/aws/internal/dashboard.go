@@ -8,7 +8,7 @@ import (
 	"github.com/kihamo/shadow/components/dashboard"
 )
 
-func (c *Component) GetTemplates() *assetfs.AssetFS {
+func (c *Component) DashboardTemplates() *assetfs.AssetFS {
 	return &assetfs.AssetFS{
 		Asset:     Asset,
 		AssetDir:  AssetDir,
@@ -17,12 +17,12 @@ func (c *Component) GetTemplates() *assetfs.AssetFS {
 	}
 }
 
-func (c *Component) GetDashboardMenu() dashboard.Menu {
-	routes := c.GetDashboardRoutes()
+func (c *Component) DashboardMenu() dashboard.Menu {
+	routes := c.DashboardRoutes()
 
 	return dashboard.NewMenuWithUrl(
 		"Aws",
-		"/"+c.GetName()+"/",
+		"/"+c.Name()+"/",
 		"cloud",
 		[]dashboard.Menu{
 			dashboard.NewMenuWithRoute("SNS", routes[0], "", nil, nil),
@@ -31,22 +31,22 @@ func (c *Component) GetDashboardMenu() dashboard.Menu {
 		nil)
 }
 
-func (c *Component) GetDashboardRoutes() []dashboard.Route {
+func (c *Component) DashboardRoutes() []dashboard.Route {
 	if c.routes == nil {
 		c.routes = []dashboard.Route{
 			dashboard.NewRoute(
-				c.GetName(),
+				c.Name(),
 				[]string{http.MethodGet, http.MethodPost},
-				"/"+c.GetName()+"/sns/",
+				"/"+c.Name()+"/sns/",
 				&handlers.SNSHandler{
 					Component: c,
 				},
 				"",
 				false),
 			dashboard.NewRoute(
-				c.GetName(),
+				c.Name(),
 				[]string{http.MethodGet, http.MethodPost},
-				"/"+c.GetName()+"/ses/",
+				"/"+c.Name()+"/ses/",
 				&handlers.SESHandler{
 					Component: c,
 				},

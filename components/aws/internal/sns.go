@@ -61,7 +61,7 @@ func (c *Component) GetTopics() []*sns.Topic {
 
 func (c *Component) loadUpdaters() {
 	go func() {
-		ticker := time.NewTicker(c.config.GetDuration(aws.ConfigUpdaterApplicationsDuration))
+		ticker := time.NewTicker(c.config.Duration(aws.ConfigUpdaterApplicationsDuration))
 
 		for {
 			select {
@@ -76,7 +76,7 @@ func (c *Component) loadUpdaters() {
 	}()
 
 	go func() {
-		ticker := time.NewTicker(c.config.GetDuration(aws.ConfigUpdaterSubscriptionsDuration))
+		ticker := time.NewTicker(c.config.Duration(aws.ConfigUpdaterSubscriptionsDuration))
 
 		for {
 			select {
@@ -91,7 +91,7 @@ func (c *Component) loadUpdaters() {
 	}()
 
 	go func() {
-		ticker := time.NewTicker(c.config.GetDuration(aws.ConfigUpdaterTopicsDuration))
+		ticker := time.NewTicker(c.config.Duration(aws.ConfigUpdaterTopicsDuration))
 
 		for {
 			select {
@@ -105,7 +105,7 @@ func (c *Component) loadUpdaters() {
 		}
 	}()
 
-	if c.config.GetBool(aws.ConfigRunUpdatersOnStartup) {
+	if c.config.Bool(aws.ConfigRunUpdatersOnStartup) {
 		c.RunApplicationsUpdater()
 		c.RunSubscriptionsUpdater()
 		c.RunTopicsUpdater()

@@ -35,8 +35,8 @@ func (c *Component) SendEmail(to []string, subject string, text string, html str
 	}
 
 	if from == "" {
-		from = c.config.GetString(aws.ConfigSesFromEmail)
-		name := c.config.GetString(aws.ConfigSesFromName)
+		from = c.config.String(aws.ConfigSesFromEmail)
+		name := c.config.String(aws.ConfigSesFromName)
 		if name != "" {
 			from = fmt.Sprintf("\"%s\" <%s>", name, from)
 		}

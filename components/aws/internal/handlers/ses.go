@@ -29,14 +29,14 @@ func (h *SESHandler) ServeHTTP(_ *dashboard.Response, r *dashboard.Request) {
 		"errors":        nil,
 		"message":       nil,
 
-		"sendFrom":    r.Config().GetString(aws.ConfigSesFromEmail),
+		"sendFrom":    r.Config().String(aws.ConfigSesFromEmail),
 		"sendTo":      "",
 		"sendSubject": "",
 		"sendMessage": "",
 		"sendType":    "html",
 	}
 
-	name := r.Config().GetString(aws.ConfigSesFromName)
+	name := r.Config().String(aws.ConfigSesFromName)
 	if name != "" {
 		vars["sendFrom"] = fmt.Sprintf("\"%s\" <%s>", name, vars["sendFrom"])
 	}
@@ -91,5 +91,5 @@ func (h *SESHandler) ServeHTTP(_ *dashboard.Response, r *dashboard.Request) {
 
 	vars["errors"] = errors
 
-	h.Render(r.Context(), h.Component.GetName(), "ses", vars)
+	h.Render(r.Context(), h.Component.Name(), "ses", vars)
 }

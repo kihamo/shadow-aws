@@ -9,7 +9,7 @@ import (
 	"github.com/kihamo/shadow/components/config"
 )
 
-func (c *Component) GetConfigVariables() []config.Variable {
+func (c *Component) ConfigVariables() []config.Variable {
 	return []config.Variable{
 		config.NewVariable(
 			aws.ConfigKey,
@@ -113,7 +113,7 @@ func (c *Component) GetConfigVariables() []config.Variable {
 	}
 }
 
-func (c *Component) GetConfigWatchers() []config.Watcher {
+func (c *Component) ConfigWatchers() []config.Watcher {
 	return []config.Watcher{
 		config.NewWatcher(aws.ComponentName, []string{aws.ConfigKey, aws.ConfigSecret}, c.watchCredentials),
 		config.NewWatcher(aws.ComponentName, []string{aws.ConfigRegion}, c.watchRegion),
@@ -125,7 +125,7 @@ func (c *Component) GetConfigWatchers() []config.Watcher {
 }
 
 func (c *Component) watchCredentials(_ string, newValue interface{}, _ interface{}) {
-	cfg := c.getAwsConfig().WithCredentials(credentials.NewStaticCredentials(c.config.GetString(aws.ConfigKey), c.config.GetString(aws.ConfigSecret), ""))
+	cfg := c.getAwsConfig().WithCredentials(credentials.NewStaticCredentials(c.config.String(aws.ConfigKey), c.config.String(aws.ConfigSecret), ""))
 	c.initAwsConfig(cfg)
 }
 
