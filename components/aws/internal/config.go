@@ -17,6 +17,7 @@ func (c *Component) GetConfigVariables() []config.Variable {
 			nil,
 			"AWS access key ID",
 			true,
+			"AWS config",
 			nil,
 			nil),
 		config.NewVariable(
@@ -25,6 +26,7 @@ func (c *Component) GetConfigVariables() []config.Variable {
 			nil,
 			"AWS secret access key",
 			true,
+			"AWS config",
 			nil,
 			nil),
 		config.NewVariable(
@@ -33,6 +35,7 @@ func (c *Component) GetConfigVariables() []config.Variable {
 			nil,
 			"AWS region",
 			true,
+			"AWS config",
 			nil,
 			nil),
 		config.NewVariable(
@@ -41,6 +44,7 @@ func (c *Component) GetConfigVariables() []config.Variable {
 			sdk.LogOff,
 			"AWS log level",
 			true,
+			"AWS config",
 			[]string{config.ViewEnum},
 			map[string]interface{}{
 				config.ViewOptionEnumOptions: [][]interface{}{
@@ -58,6 +62,7 @@ func (c *Component) GetConfigVariables() []config.Variable {
 			true,
 			"Run updater jobs on startup",
 			false,
+			"Updaters",
 			nil,
 			nil),
 		config.NewVariable(
@@ -66,6 +71,7 @@ func (c *Component) GetConfigVariables() []config.Variable {
 			"10m",
 			"Duration for AWS applications updater",
 			true,
+			"Updaters",
 			nil,
 			nil),
 		config.NewVariable(
@@ -74,6 +80,7 @@ func (c *Component) GetConfigVariables() []config.Variable {
 			"10m",
 			"Duration for AWS subscriptions updater",
 			true,
+			"Updaters",
 			nil,
 			nil),
 		config.NewVariable(
@@ -82,6 +89,7 @@ func (c *Component) GetConfigVariables() []config.Variable {
 			"10m",
 			"Duration for AWS topics updater",
 			true,
+			"Updaters",
 			nil,
 			nil),
 		config.NewVariable(
@@ -90,6 +98,7 @@ func (c *Component) GetConfigVariables() []config.Variable {
 			nil,
 			"Email for from field in letters",
 			true,
+			"SES",
 			nil,
 			nil),
 		config.NewVariable(
@@ -98,6 +107,7 @@ func (c *Component) GetConfigVariables() []config.Variable {
 			nil,
 			"Name for from field in letters",
 			true,
+			"SES",
 			nil,
 			nil),
 	}
