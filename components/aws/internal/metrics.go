@@ -14,11 +14,11 @@ const (
 )
 
 var (
-	metricApplicationsTotal  snitch.Gauge
-	metricSubscriptionsTotal snitch.Gauge
-	metricTopicsTotal        snitch.Gauge
-	metricEndpointsTotal     snitch.Gauge
-	metricSesEmailTotal      snitch.Counter
+	metricApplicationsTotal  = snitch.NewGauge(MetricApplicationsTotal, "Number SNS applications")
+	metricSubscriptionsTotal = snitch.NewGauge(MetricSubscriptionsTotal, "Number SNS subscriptions")
+	metricTopicsTotal        = snitch.NewGauge(MetricTopicsTotal, "Number SNS topics")
+	metricEndpointsTotal     = snitch.NewGauge(MetricEndpointsTotal, "Number SNS endpoints")
+	metricSesEmailTotal      = snitch.NewCounter(MetricSesEmailTotal, "Number of SES mail")
 )
 
 type metricsCollector struct {
@@ -41,11 +41,5 @@ func (c *metricsCollector) Collect(ch chan<- snitch.Metric) {
 }
 
 func (c *Component) Metrics() snitch.Collector {
-	metricApplicationsTotal = snitch.NewGauge(MetricApplicationsTotal, "Number SNS applications")
-	metricSubscriptionsTotal = snitch.NewGauge(MetricSubscriptionsTotal, "Number SNS subscriptions")
-	metricTopicsTotal = snitch.NewGauge(MetricTopicsTotal, "Number SNS topics")
-	metricEndpointsTotal = snitch.NewGauge(MetricEndpointsTotal, "Number SNS endpoints")
-	metricSesEmailTotal = snitch.NewCounter(MetricSesEmailTotal, "Number of SES mail")
-
 	return &metricsCollector{}
 }
