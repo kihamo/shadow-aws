@@ -12,6 +12,7 @@ import (
 	"github.com/kihamo/shadow/components/config"
 	"github.com/kihamo/shadow/components/dashboard"
 	"github.com/kihamo/shadow/components/logger"
+	"github.com/kihamo/shadow/components/metrics"
 )
 
 const (
@@ -27,9 +28,10 @@ type Component struct {
 
 	routes []dashboard.Route
 
-	services  map[string]interface{}
-	awsConfig *sdk.Config
-	mutex     sync.RWMutex
+	services       map[string]interface{}
+	awsConfig      *sdk.Config
+	mutex          sync.RWMutex
+	metricsEnabled bool
 
 	applications       map[string]aws.SnsApplication
 	applicationsTicker chan time.Duration
@@ -61,6 +63,9 @@ func (c *Component) Dependencies() []shadow.Dependency {
 		{
 			Name: logger.ComponentName,
 		},
+		{
+			Name: metrics.ComponentName,
+		},
 	}
 }
 
@@ -70,6 +75,7 @@ func (c *Component) Init(a shadow.Application) error {
 	c.config = a.GetComponent(config.ComponentName).(config.Component)
 
 	c.services = map[string]interface{}{}
+	c.metricsEnabled = a.HasComponent(metrics.ComponentName)
 
 	c.applicationsTicker = make(chan time.Duration)
 	c.applicationsRun = make(chan struct{})

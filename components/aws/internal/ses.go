@@ -71,7 +71,7 @@ func (c *Component) SendEmail(to []string, subject string, text string, html str
 
 	_, err := c.GetSES().SendEmail(input)
 
-	if metricSesEmailTotal != nil {
+	if c.metricsEnabled {
 		if err != nil {
 			metricSesEmailTotal.With("status", "failed").Inc()
 		} else {

@@ -167,7 +167,7 @@ func (c *Component) updaterApplications() {
 		return
 	}
 
-	if metricApplicationsTotal != nil {
+	if c.metricsEnabled {
 		metricApplicationsTotal.Set(float64(len(applications)))
 	}
 
@@ -262,7 +262,7 @@ func (c *Component) updaterEndpoints() {
 		}
 	}
 
-	if metricEndpointsTotal != nil {
+	if c.metricsEnabled {
 		metricEndpointsTotal.Set(float64(endpointsTotal))
 		metricEndpointsTotal.With("status", "enabled").Set(float64(endpointsEnabledTotal))
 	}
@@ -282,7 +282,7 @@ func (c *Component) updaterSubscriptions() {
 		return
 	}
 
-	if metricSubscriptionsTotal != nil {
+	if c.metricsEnabled {
 		metricSubscriptionsTotal.Set(float64(len(subscriptions)))
 	}
 
@@ -307,7 +307,7 @@ func (c *Component) updaterTopics() {
 		return
 	}
 
-	if metricTopicsTotal != nil {
+	if c.metricsEnabled {
 		metricTopicsTotal.Set(float64(len(topics)))
 	}
 
