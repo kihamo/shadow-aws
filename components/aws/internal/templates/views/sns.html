@@ -189,27 +189,28 @@
         });
 
         $.fn.dataTableExt.afnFiltering.push(
-            function(settings, data){
+            function(settings, data, dataIndex, row, counter){
                 if (settings.sTableId === 'applications') {
                     var v = $('#cert-selector').val();
 
                     if (v === 'expired') {
-                        if (!data[2].length) {
+                        if (!row[2].length) {
                             return false;
                         }
 
-                        var d = Date.parse(data[2]);
+                        var d = Date.parse(row[2]);
 
                         if (!d) {
                             return false;
                         }
 
-                        return new Date() >= d;
+                        return Date.now() >= d;
                     }
                 }
 
                 return true
-            });
+            }
+        );
 
         $('#applications').DataTable({
             columns: [
