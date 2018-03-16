@@ -137,7 +137,7 @@ func (c *Component) getAwsConfig() *sdk.Config {
 
 func (c *Component) GetServices() map[string]interface{} {
 	c.mutex.RLock()
-	c.mutex.RUnlock()
+	defer c.mutex.RUnlock()
 
 	return c.services
 }
