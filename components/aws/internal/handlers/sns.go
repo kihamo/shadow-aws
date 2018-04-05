@@ -9,24 +9,24 @@ import (
 
 type SNSHandler struct {
 	dashboard.Handler
-
-	Component aws.Component
 }
 
 func (h *SNSHandler) ServeHTTP(w *dashboard.Response, r *dashboard.Request) {
+	component := r.Component().(aws.Component)
+
 	if r.IsPost() {
 		r.Original().ParseForm()
 		updater := r.Original().PostForm.Get("updater")
 
 		switch updater {
 		case "applications":
-			h.Component.RunApplicationsUpdater()
+			component.RunApplicationsUpdater()
 			r.Logger().Info("Run updater applications manually")
 		case "subscriptions":
-			h.Component.RunSubscriptionsUpdater()
+			component.RunSubscriptionsUpdater()
 			r.Logger().Info("Run updater subscriptions manually")
 		case "topics":
-			h.Component.RunTopicsUpdater()
+			component.RunTopicsUpdater()
 			r.Logger().Info("Run updater topics manually")
 		}
 
@@ -34,10 +34,10 @@ func (h *SNSHandler) ServeHTTP(w *dashboard.Response, r *dashboard.Request) {
 		return
 	}
 
-	h.Render(r.Context(), h.Component.Name(), "sns", map[string]interface{}{
-		"services":      h.Component.GetServices(),
-		"applications":  h.Component.GetApplications(),
-		"subscriptions": h.Component.GetSubscriptions(),
-		"topics":        h.Component.GetTopics(),
+	h.Render(r.Context(), "sns", map[string]interface{}{
+		"services":      component.GetServices(),
+		"applications":  component.GetApplications(),
+		"subscriptions": component.GetSubscriptions(),
+		"topics":        component.GetTopics(),
 	})
 }

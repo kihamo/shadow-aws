@@ -1,7 +1,7 @@
 {{ define "content" }}
 <div class="page-title">
     <div class="title_left">
-        <h3>Amazon Simple Email Service</h3>
+        <h3>{{ i18n "Amazon Simple Email Service" . }}</h3>
     </div>
 </div>
 
@@ -12,7 +12,7 @@
     <div class="col-md-12 col-sm-12 col-xs-12">
         <div class="x_panel">
             <div class="x_title">
-                <h2>Send SMS</h2>
+                <h2>{{ i18n "Send email" . }}</h2>
                 <ul class="nav navbar-right panel_toolbox">
                     <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
                 </ul>
@@ -22,7 +22,7 @@
                 <form class="form-horizontal form-label-left" role="form" method="post" id="send-mail" action="/aws/ses" novalidate>
                     <div class="item form-group">
                         <label for="from" class="control-label col-md-3 col-sm-3 col-xs-12">
-                            From <span class="required">*</span>
+                            {{ i18n "From" . }} <span class="required">*</span>
                         </label>
                         <div class="col-md-6 col-sm-6 col-xs-12">
                             <input type="text" class="form-control" id="from" name="from" placeholder="example1@domain.com" value="{{ .sendFrom }}" required="required">
@@ -30,7 +30,7 @@
                     </div>
                     <div class="item form-group">
                         <label for="to" class="control-label col-md-3 col-sm-3 col-xs-12">
-                            To <span class="required">*</span>
+                            {{ i18n "To" . }} <span class="required">*</span>
                         </label>
                         <div class="col-md-6 col-sm-6 col-xs-12">
                             <input type="text" class="form-control" id="to" name="to" placeholder="example1@domain.com, example2@domain.com" value="{{ .sendTo }}" required="required">
@@ -38,7 +38,7 @@
                     </div>
                     <div class="item form-group">
                         <label for="subject" class="control-label col-md-3 col-sm-3 col-xs-12">
-                            Subject <span class="required">*</span>
+                            {{ i18n "Subject" . }} <span class="required">*</span>
                         </label>
                         <div class="col-md-6 col-sm-6 col-xs-12">
                             <input type="text" class="form-control" id="subject" name="subject" value="{{ .sendSubject }}" required="required">
@@ -46,18 +46,18 @@
                     </div>
                     <div class="item form-group">
                         <label for="type" class="control-label col-md-3 col-sm-3 col-xs-12">
-                            Content type <span class="required">*</span>
+                            {{ i18n "Content type" . }} <span class="required">*</span>
                         </label>
                         <div class="col-md-6 col-sm-6 col-xs-12">
                             <select class="form-control select2" style="width:100%" name="type" id="type" required="required">
-                                <option value="plain"{{ if eq .sendType "plain" }} selected{{ end }}>Plain text</option>
-                                <option value="html"{{ if eq .sendType "html" }} selected{{ end }}>HTML</option>
+                                <option value="plain"{{ if eq .sendType "plain" }} selected{{ end }}>{{ i18n "Plain text" . }}</option>
+                                <option value="html"{{ if eq .sendType "html" }} selected{{ end }}>{{ i18n "HTML" . }}</option>
                             </select>
                         </div>
                     </div>
                     <div class="item form-group">
                         <label for="message" class="control-label col-md-3 col-sm-3 col-xs-12">
-                            Message <span class="required">*</span>
+                            {{ i18n "Message" . }} <span class="required">*</span>
                         </label>
                         <div class="col-md-6 col-sm-6 col-xs-12">
                             <textarea class="form-control" rows="4" name="message" id="message" required="required">{{ .sendMessage }}</textarea>
@@ -66,8 +66,8 @@
                     <div class="ln_solid"></div>
                     <div class="form-group">
                         <div class="col-md-6 col-md-offset-3">
-                            <button type="reset" class="btn btn-info" value="reset">Reset</button>
-                            <button type="submit" class="btn btn-success">Send</button>
+                            <button type="reset" class="btn btn-info" value="reset">{{ i18n "Reset" . }}</button>
+                            <button type="submit" class="btn btn-success">{{ i18n "Send" . }}</button>
                         </div>
                     </div>
                 </form>
@@ -80,7 +80,7 @@
     <div class="col-md-6 col-sm-6 col-xs-12">
         <div class="x_panel">
             <div class="x_title">
-                <h2>Quota</h2>
+                <h2>{{ i18n "Quota" . }}</h2>
                 <ul class="nav navbar-right panel_toolbox">
                     <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
                 </ul>
@@ -93,14 +93,14 @@
                     <ul class="list-inline widget_tally">
                         <li>
                             <p>
-                                <span class="month">Sending quota per 24 hour period</span>
-                                <span class="count"><em><strong class="text-danger">{{ .max24HourSend }}</strong> emails</em></span>
+                                <span class="month">{{ i18n "Sending quota per 24 hour period" . }}</span>
+                                <span class="count"><em>{{ i18nPlural "%.f email" "%.f emails" .max24HourSend . nil nil nil .max24HourSend }}</em></span>
                             </p>
                         </li>
                         <li>
                             <p>
-                                <span class="month">Max send rate</span>
-                                <span class="count"><em><strong class="text-danger">{{ .maxSendRate }}</strong> emails/second</em></span>
+                                <span class="month">{{ i18n "Max send rate" . }}</span>
+                                <span class="count"><em>{{ i18nPlural "%.f email/second" "%.f emails/second" .maxSendRate . nil nil nil .maxSendRate }}</em></span>
                             </p>
                         </li>
                     </ul>
@@ -112,7 +112,7 @@
     <div class="col-md-6 col-sm-6 col-xs-12">
         <div class="x_panel">
             <div class="x_title">
-                <h2>Statistics</h2>
+                <h2>{{ i18n "Statistics" . }}</h2>
                 <ul class="nav navbar-right panel_toolbox">
                     <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
                 </ul>
@@ -128,8 +128,8 @@
 {{ end }}
 
 {{ define "js" }}
-<script src="/dashboard/assets/vendors/validator/js/validator.min.js?v={{ .Application.build }}"></script>
-<script src="/dashboard/assets/vendors/echarts/js/echarts.min.js?v={{ .Application.build }}"></script>
+    {{ staticHTML (staticURL "/dashboard/assets/vendors/validator/js/validator.min.js" false) }}
+    {{ staticHTML (staticURL "/dashboard/assets/vendors/echarts/js/echarts.min.js" false) }}
 
 <script type="application/javascript">
     $(document).ready(function () {
@@ -176,7 +176,7 @@
                 feature: {
                     saveAsImage: {
                         show: true,
-                        title: 'Save',
+                        title: '{{ i18n "Save" . }}',
                         name: 'quota'
                     }
                 }
@@ -190,8 +190,8 @@
                     }
                 },
                 data: [
-                    { value: {{ .sent }}, name: 'Sent' },
-                    { value: {{ .remaining }}, name: 'Remaining' }
+                    { value: {{ .sent }}, name: '{{ i18n "Sent" . }}' },
+                    { value: {{ .remaining }}, name: '{{ i18n "Remaining" . }}' }
                 ]
             }]
         });
@@ -203,7 +203,7 @@
                 feature: {
                     saveAsImage: {
                         show: true,
-                        title: 'Save',
+                        title: '{{ i18n "Save" . }}',
                         name: 'stats'
                     }
                 }
@@ -215,7 +215,7 @@
                 }
             },
             legend: {
-                data:['Deliveries','Bounces','Complaints','Rejects']
+                data:['{{ i18n "Deliveries" . }}','{{ i18n "Bounces" . }}','{{ i18n "Complaints" . }}','{{ i18n "Rejects" . }}']
             },
             dataZoom: {
                 show: true,
@@ -227,19 +227,19 @@
             yAxis: {
             },
             series: [{
-                name: 'Deliveries',
+                name: '{{ i18n "Deliveries" . }}',
                 type: 'bar',
                 data: [{{ range $index, $stat := .stats }}{{ if $index }},{{ end }}['{{ $stat.Timestamp.Format "2006-01-02T15:04:05Z07:00" }}',{{ $stat.DeliveryAttempts }}]{{ end }}]
             },{
-                name: 'Bounces',
+                name: '{{ i18n "Bounces" . }}',
                 type: 'bar',
                 data: [{{ range $index, $stat := .stats }}{{ if $index }},{{ end }}['{{ $stat.Timestamp.Format "2006-01-02T15:04:05Z07:00" }}',{{ $stat.Bounces }}]{{ end }}]
             },{
-                name: 'Complaints',
+                name: '{{ i18n "Complaints" . }}',
                 type: 'bar',
                 data: [{{ range $index, $stat := .stats }}{{ if $index }},{{ end }}['{{ $stat.Timestamp.Format "2006-01-02T15:04:05Z07:00" }}',{{ $stat.Complaints }}]{{ end }}]
             },{
-                name: 'Rejects',
+                name: '{{ i18n "Rejects" . }}',
                 type: 'bar',
                 data: [{{ range $index, $stat := .stats }}{{ if $index }},{{ end }}['{{ $stat.Timestamp.Format "2006-01-02T15:04:05Z07:00" }}',{{ $stat.Rejects }}]{{ end }}]
             }]

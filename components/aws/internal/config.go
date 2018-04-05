@@ -11,42 +11,47 @@ import (
 
 func (c *Component) ConfigVariables() []config.Variable {
 	return []config.Variable{
-		config.NewVariable(
-			aws.ConfigKey,
-			config.ValueTypeString,
-			nil,
-			"AWS access key ID",
-			true,
-			"AWS config",
-			nil,
-			nil),
-		config.NewVariable(
-			aws.ConfigSecret,
-			config.ValueTypeString,
-			nil,
-			"AWS secret access key",
-			true,
-			"AWS config",
-			nil,
-			nil),
-		config.NewVariable(
-			aws.ConfigRegion,
-			config.ValueTypeString,
-			nil,
-			"AWS region",
-			true,
-			"AWS config",
-			nil,
-			nil),
-		config.NewVariable(
-			aws.ConfigLogLevel,
-			config.ValueTypeUint,
-			sdk.LogOff,
-			"AWS log level",
-			true,
-			"AWS config",
-			[]string{config.ViewEnum},
-			map[string]interface{}{
+		config.NewVariable(aws.ConfigKey, config.ValueTypeString).
+			WithUsage("Access key ID").
+			WithGroup("AWS config").
+			WithEditable(true),
+		config.NewVariable(aws.ConfigSecret, config.ValueTypeString).
+			WithUsage("Secret access key").
+			WithGroup("AWS config").
+			WithEditable(true).
+			WithView([]string{config.ViewPassword}),
+		config.NewVariable(aws.ConfigRegion, config.ValueTypeString).
+			WithUsage("Region").
+			WithGroup("AWS config").
+			WithEditable(true).
+			WithView([]string{config.ViewEnum}).
+			WithViewOptions(map[string]interface{}{
+				config.ViewOptionEnumOptions: [][]interface{}{
+					{"us-east-1", "US East (N. Virginia)"},
+					{"us-east-2", "US East (Ohio)"},
+					{"us-west-1", "US West (N. California)"},
+					{"us-west-2", "US West (Oregon)"},
+					{"ca-central-1", "Canada (Central)"},
+					{"eu-central-1", "EU (Frankfurt)"},
+					{"eu-west-1", "EU (Ireland)"},
+					{"eu-west-2", "EU (London)"},
+					{"eu-west-3", "EU (Paris)"},
+					{"ap-northeast-1", "Asia Pacific (Tokyo)"},
+					{"ap-northeast-2", "Asia Pacific (Seoul)"},
+					{"ap-northeast-3", "Asia Pacific (Osaka-Local)"},
+					{"ap-southeast-1", "Asia Pacific (Singapore)"},
+					{"ap-southeast-2", "Asia Pacific (Sydney)"},
+					{"ap-south-1", "Asia Pacific (Mumbai)"},
+					{"sa-east-1", "South America (São Paulo)"},
+				},
+			}),
+		config.NewVariable(aws.ConfigLogLevel, config.ValueTypeUint).
+			WithUsage("Log level").
+			WithGroup("AWS config").
+			WithEditable(true).
+			WithDefault(sdk.LogOff).
+			WithView([]string{config.ViewEnum}).
+			WithViewOptions(map[string]interface{}{
 				config.ViewOptionEnumOptions: [][]interface{}{
 					{sdk.LogOff, "LogOff"},
 					{sdk.LogDebug, "LogDebug"},
@@ -56,71 +61,44 @@ func (c *Component) ConfigVariables() []config.Variable {
 					{sdk.LogDebugWithRequestErrors, "LogDebugWithRequestErrors"},
 				},
 			}),
-		config.NewVariable(
-			aws.ConfigRunUpdatersOnStartup,
-			config.ValueTypeBool,
-			true,
-			"Run updater jobs on startup",
-			false,
-			"Updaters",
-			nil,
-			nil),
-		config.NewVariable(
-			aws.ConfigUpdaterApplicationsDuration,
-			config.ValueTypeDuration,
-			"10m",
-			"Duration for AWS applications updater",
-			true,
-			"Updaters",
-			nil,
-			nil),
-		config.NewVariable(
-			aws.ConfigUpdaterSubscriptionsDuration,
-			config.ValueTypeDuration,
-			"10m",
-			"Duration for AWS subscriptions updater",
-			true,
-			"Updaters",
-			nil,
-			nil),
-		config.NewVariable(
-			aws.ConfigUpdaterTopicsDuration,
-			config.ValueTypeDuration,
-			"10m",
-			"Duration for AWS topics updater",
-			true,
-			"Updaters",
-			nil,
-			nil),
-		config.NewVariable(
-			aws.ConfigSesFromEmail,
-			config.ValueTypeString,
-			nil,
-			"Email for from field in letters",
-			true,
-			"SES",
-			nil,
-			nil),
-		config.NewVariable(
-			aws.ConfigSesFromName,
-			config.ValueTypeString,
-			nil,
-			"Name for from field in letters",
-			true,
-			"SES",
-			nil,
-			nil),
+		config.NewVariable(aws.ConfigRunUpdatersOnStartup, config.ValueTypeBool).
+			WithUsage("Run updater on startup").
+			WithGroup("Updaters").
+			WithDefault(true),
+		config.NewVariable(aws.ConfigUpdaterApplicationsDuration, config.ValueTypeDuration).
+			WithUsage("Duration for SNS applications updater").
+			WithGroup("Updaters").
+			WithEditable(true).
+			WithDefault("10m"),
+		config.NewVariable(aws.ConfigUpdaterSubscriptionsDuration, config.ValueTypeDuration).
+			WithUsage("Duration for SNS subscriptions updater").
+			WithGroup("Updaters").
+			WithEditable(true).
+			WithDefault("10m"),
+		config.NewVariable(aws.ConfigUpdaterTopicsDuration, config.ValueTypeDuration).
+			WithUsage("Duration for SNS topics updater").
+			WithGroup("Updaters").
+			WithEditable(true).
+			WithDefault("10m"),
+		config.NewVariable(aws.ConfigSesFromEmail, config.ValueTypeString).
+			WithUsage("Mail from address").
+			WithGroup("SES").
+			WithEditable(true),
+		config.NewVariable(aws.ConfigSesFromName, config.ValueTypeString).
+			WithUsage("Mail from name").
+			WithGroup("SES").
+			WithEditable(true),
 	}
 }
 
 func (c *Component) ConfigWatchers() []config.Watcher {
 	return []config.Watcher{
-		config.NewWatcher(aws.ComponentName, []string{aws.ConfigKey, aws.ConfigSecret}, c.watchCredentials),
-		config.NewWatcher(aws.ComponentName, []string{aws.ConfigRegion}, c.watchRegion),
-		config.NewWatcher(aws.ComponentName, []string{aws.ConfigLogLevel}, c.watchLogLevel),
-		config.NewWatcher(aws.ComponentName, []string{aws.ConfigUpdaterApplicationsDuration}, c.watchUpdaterApplicationsDuration),
-		config.NewWatcher(aws.ComponentName, []string{aws.ConfigUpdaterSubscriptionsDuration}, c.watchUpdaterSubscriptionsDuration),
-		config.NewWatcher(aws.ComponentName, []string{aws.ConfigUpdaterTopicsDuration}, c.watchUpdaterTopicsDuration),
+		config.NewWatcher([]string{aws.ConfigKey, aws.ConfigSecret}, c.watchCredentials),
+		config.NewWatcher([]string{aws.ConfigRegion}, c.watchRegion),
+		config.NewWatcher([]string{aws.ConfigLogLevel}, c.watchLogLevel),
+		config.NewWatcher([]string{aws.ConfigUpdaterApplicationsDuration}, c.watchUpdaterApplicationsDuration),
+		config.NewWatcher([]string{aws.ConfigUpdaterSubscriptionsDuration}, c.watchUpdaterSubscriptionsDuration),
+		config.NewWatcher([]string{aws.ConfigUpdaterTopicsDuration}, c.watchUpdaterTopicsDuration),
 	}
 }
 

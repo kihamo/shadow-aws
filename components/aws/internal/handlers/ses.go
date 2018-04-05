@@ -8,16 +8,15 @@ import (
 	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/kihamo/shadow-aws/components/aws"
 	"github.com/kihamo/shadow/components/dashboard"
+	"github.com/kihamo/shadow/components/i18n"
 )
 
 type SESHandler struct {
 	dashboard.Handler
-
-	Component aws.Component
 }
 
 func (h *SESHandler) ServeHTTP(_ *dashboard.Response, r *dashboard.Request) {
-	errors := []string{}
+	errors := make([]string, 0, 0)
 	vars := map[string]interface{}{
 		"sent":          float64(0),
 		"maxSendRate":   float64(0),
@@ -41,6 +40,8 @@ func (h *SESHandler) ServeHTTP(_ *dashboard.Response, r *dashboard.Request) {
 		vars["sendFrom"] = fmt.Sprintf("\"%s\" <%s>", name, vars["sendFrom"])
 	}
 
+	component := r.Component().(aws.Component)
+
 	if r.IsPost() {
 		var (
 			text, html string
@@ -60,21 +61,21 @@ func (h *SESHandler) ServeHTTP(_ *dashboard.Response, r *dashboard.Request) {
 
 		to := strings.Split(vars["sendTo"].(string), ",")
 
-		if err := h.Component.SendEmail(to, vars["sendSubject"].(string), text, html, vars["sendFrom"].(string)); err != nil {
+		if err := component.SendEmail(to, vars["sendSubject"].(string), text, html, vars["sendFrom"].(string)); err != nil {
 			errors = append(errors, err.Error())
 		} else {
-			vars["message"] = "Message send success"
+			vars["message"] = i18n.NewOrNopFromRequest(r).Translate(r.Component().Name(), "Message send success", "")
 		}
 	}
 
-	service := h.Component.GetSES()
+	service := component.GetSES()
 
 	// quota
 	quota, err := service.GetSendQuota(&ses.GetSendQuotaInput{})
 	if err == nil {
-		vars["sent"] = quota.SentLast24Hours
-		vars["maxSendRate"] = quota.MaxSendRate
-		vars["max24HourSend"] = quota.Max24HourSend
+		vars["sent"] = *quota.SentLast24Hours
+		vars["maxSendRate"] = *quota.MaxSendRate
+		vars["max24HourSend"] = *quota.Max24HourSend
 		vars["remaining"] = *quota.Max24HourSend - *quota.SentLast24Hours
 		vars["sentPercent"] = (*quota.SentLast24Hours * 100.0) / *quota.Max24HourSend
 	} else {
@@ -91,5 +92,5 @@ func (h *SESHandler) ServeHTTP(_ *dashboard.Response, r *dashboard.Request) {
 
 	vars["errors"] = errors
 
-	h.Render(r.Context(), h.Component.Name(), "ses", vars)
+	h.Render(r.Context(), "ses", vars)
 }

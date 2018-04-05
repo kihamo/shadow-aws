@@ -9,49 +9,28 @@ import (
 )
 
 func (c *Component) DashboardTemplates() *assetfs.AssetFS {
-	return &assetfs.AssetFS{
-		Asset:     Asset,
-		AssetDir:  AssetDir,
-		AssetInfo: AssetInfo,
-		Prefix:    "templates",
-	}
+	return dashboard.TemplatesFromAssetFS(c)
 }
 
 func (c *Component) DashboardMenu() dashboard.Menu {
 	routes := c.DashboardRoutes()
 
-	return dashboard.NewMenuWithUrl(
-		"Aws",
-		"/"+c.Name()+"/",
-		"cloud",
-		[]dashboard.Menu{
-			dashboard.NewMenuWithRoute("SNS", routes[0], "", nil, nil),
-			dashboard.NewMenuWithRoute("SES", routes[1], "", nil, nil),
-		},
-		nil)
+	return dashboard.NewMenu("Aws").
+		WithRoute(routes[0]).
+		WithIcon("cloud").
+		WithChild(dashboard.NewMenu("SNS").WithRoute(routes[0])).
+		WithChild(dashboard.NewMenu("SES").WithRoute(routes[1]))
 }
 
 func (c *Component) DashboardRoutes() []dashboard.Route {
 	if c.routes == nil {
 		c.routes = []dashboard.Route{
-			dashboard.NewRoute(
-				c.Name(),
-				[]string{http.MethodGet, http.MethodPost},
-				"/"+c.Name()+"/sns/",
-				&handlers.SNSHandler{
-					Component: c,
-				},
-				"",
-				false),
-			dashboard.NewRoute(
-				c.Name(),
-				[]string{http.MethodGet, http.MethodPost},
-				"/"+c.Name()+"/ses/",
-				&handlers.SESHandler{
-					Component: c,
-				},
-				"",
-				false),
+			dashboard.NewRoute("/"+c.Name()+"/sns/", &handlers.SNSHandler{}).
+				WithMethods([]string{http.MethodGet, http.MethodPost}).
+				WithAuth(true),
+			dashboard.NewRoute("/"+c.Name()+"/ses/", &handlers.SESHandler{}).
+				WithMethods([]string{http.MethodGet, http.MethodPost}).
+				WithAuth(true),
 		}
 	}
 

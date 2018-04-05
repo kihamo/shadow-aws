@@ -1,7 +1,7 @@
 {{ define "content" }}
 <div class="page-title">
     <div class="title_left">
-        <h3>Amazon Simple Notification Service</h3>
+        <h3>{{ i18n "Amazon Simple Notification Service" . }}</h3>
     </div>
 </div>
 
@@ -9,7 +9,7 @@
 
 <div class="x_panel">
     <div class="x_title">
-        <h2><i class="fa fa-users"></i> Services</h2>
+        <h2><i class="fa fa-users"></i> {{ i18n "Services" . }}</h2>
         <ul class="nav navbar-right panel_toolbox">
             <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
         </ul>
@@ -19,7 +19,7 @@
         <table class="table table-striped datatable">
             <thead>
             <tr>
-                <th>Active services</th>
+                <th>{{ i18n "Active services" . }}</th>
             </tr>
             </thead>
             <tbody>
@@ -35,7 +35,7 @@
 
 <div class="x_panel">
     <div class="x_title">
-        <h2><i class="fa fa-users"></i> Applications</h2>
+        <h2><i class="fa fa-users"></i> {{ i18n "Applications" . }}</h2>
         <ul class="nav navbar-right panel_toolbox">
             <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
             <li class="dropdown">
@@ -43,7 +43,7 @@
                 <ul class="dropdown-menu" role="menu">
                     <li>
                         <a href="javascript:void(0)" id="applications-update" data-updater="applications">
-                            <i class="glyphicon glyphicon-refresh"></i> Update
+                            <i class="glyphicon glyphicon-refresh"></i> {{ i18n "Update" . }}
                         </a>
                     </li>
                 </ul>
@@ -55,11 +55,11 @@
 
         <table class="table table-hover table-striped" id="applications">
             <thead>
-                <th>IAM</th>
-                <th>Application ARN</th>
-                <th>Certificate expiration</th>
-                <th>Endpoints</th>
-                <th>Last update</th>
+                <th>{{ i18n "IAM" . }}</th>
+                <th>{{ i18n "Application ARN" . }}</th>
+                <th>{{ i18n "Certificate expiration" . }}</th>
+                <th>{{ i18n "Endpoint" . }}</th>
+                <th>{{ i18n "Last update" . }}</th>
             </thead>
             <tbody>
             {{ range $i, $application := .applications }}
@@ -97,7 +97,7 @@
 
 <div class="x_panel">
     <div class="x_title">
-        <h2><i class="fa fa-users"></i> Topics</h2>
+        <h2><i class="fa fa-users"></i> {{ i18n "Topics" . }}</h2>
         <ul class="nav navbar-right panel_toolbox">
             <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
             <li class="dropdown">
@@ -105,7 +105,7 @@
                 <ul class="dropdown-menu" role="menu">
                     <li>
                         <a href="javascript:void(0)" id="topics-update" data-updater="topics">
-                            <i class="glyphicon glyphicon-refresh"></i> Update
+                            <i class="glyphicon glyphicon-refresh"></i> {{ i18n "Update" . }}
                         </a>
                     </li>
                 </ul>
@@ -117,7 +117,7 @@
         <table class="table table-striped datatable datatable-counter">
             <thead>
             <tr>
-                <th>Topic ARN</th>
+                <th>{{ i18n "Topic ARN" . }}</th>
             </tr>
             </thead>
             <tbody>
@@ -133,7 +133,7 @@
 
 <div class="x_panel">
     <div class="x_title">
-        <h2><i class="fa fa-users"></i> Subscriptions</h2>
+        <h2><i class="fa fa-users"></i> {{ i18n "Subscriptions" . }}</h2>
         <ul class="nav navbar-right panel_toolbox">
             <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
             <li class="dropdown">
@@ -141,7 +141,7 @@
                 <ul class="dropdown-menu" role="menu">
                     <li>
                         <a href="javascript:void(0)" id="subscriptions-update" data-updater="subscriptions">
-                            <i class="glyphicon glyphicon-refresh"></i> Update
+                            <i class="glyphicon glyphicon-refresh"></i> {{ i18n "Update" . }}
                         </a>
                     </li>
                 </ul>
@@ -152,8 +152,8 @@
     <div class="x_content">
         <table class="table table-striped datatable datatable-counter">
             <thead>
-                <th>Subscription ARN</th>
-                <th>Endpoint</th>
+                <th>{{ i18n "Subscription ARN" . }}</th>
+                <th>{{ i18n "Endpoint" . }}</th>
             </thead>
             <tbody>
             {{ range $i, $subscription := .subscriptions }}
@@ -169,14 +169,14 @@
 {{ end }}
 
 {{ define "head" }}
-<link href="/dashboard/assets/vendors/datatables.net-bs/css/dataTables.bootstrap.min.css?v={{ .Application.build }}" rel="stylesheet">
-<link href="/dashboard/assets/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css?v={{ .Application.build }}" rel="stylesheet">
+    {{ staticHTML (staticURL "/dashboard/assets/vendors/datatables.net-bs/css/dataTables.bootstrap.min.css" false) }}
+    {{ staticHTML (staticURL "/dashboard/assets/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css" false) }}
 {{ end }}
 
 {{ define "js" }}
-<script src="/dashboard/assets/vendors/datatables.net/js/jquery.dataTables.min.js?v={{ .Application.build }}"></script>
-<script src="/dashboard/assets/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js?v={{ .Application.build }}"></script>
-<script src="/dashboard/assets/vendors/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js?v={{ .Application.build }}"></script>
+    {{ staticHTML (staticURL "/dashboard/assets/vendors/datatables.net/js/jquery.dataTables.min.js" false) }}
+    {{ staticHTML (staticURL "/dashboard/assets/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js" false) }}
+    {{ staticHTML (staticURL "/dashboard/assets/vendors/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js" false) }}
 
 <script type="application/javascript">
     $(document).ready(function () {
@@ -213,6 +213,9 @@
         );
 
         $('#applications').DataTable({
+            language: {
+                url: '/dashboard/datatables/i18n.json'
+            },
             columns: [
                 {
                     data: 0
@@ -254,8 +257,8 @@
                                 e.stopPropagation();
                             });
 
-                    select.append('<option value="all">Show all</option>');
-                    select.append('<option value="expired">Expired</option>');
+                    select.append('<option value="all">{{ i18n "Show all" . }}</option>');
+                    select.append('<option value="expired">{{ i18n "Expired" . }}</option>');
                 });
             }
         });
